@@ -19,6 +19,12 @@ jobs:
       commit_msg: ${{ steps.commit.outputs.msg }}
 
     steps:
+      - name: Test GitHub API
+        run: |
+          curl \
+            -H "Authorization: Bearer ${{ secrets.PRIVATE_REPO_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/yemf001/eado-app
       - name: Checkout PRIVATE repo
         run: |
           git clone https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/yemf001/eado-app.git app
