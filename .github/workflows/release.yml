@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Check Secret
         run: |
-          if [ -z "${{ secrets.PRIVATE_REPO_TOKEN }}" ]; then
+          if [ -z "${{ secrets.PUBLIC_REPO_TOKEN }}" ]; then
             echo "TOKEN IS EMPTY"
             exit 1
           else
@@ -30,12 +30,12 @@ jobs:
       - name: Test GitHub API
         run: |
           curl \
-            -H "Authorization: Bearer ${{ secrets.PRIVATE_REPO_TOKEN }}" \
+            -H "Authorization: Bearer ${{ secrets.PUBLIC_REPO_TOKEN }}" \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/yemf001/eado-app
       - name: Checkout PRIVATE repo
         run: |
-          git clone https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/yemf001/eado-app.git app
+          git clone https://x-access-token:${{ secrets.PUBLIC_REPO_TOKEN }}@github.com/yemf001/eado-app.git app
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -67,7 +67,7 @@ jobs:
     steps:
       - name: Checkout PRIVATE Repo
         run: |
-          git clone https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/yemf001/eado-app.git app
+          git clone https://x-access-token:${{ secrets.PUBLIC_REPO_TOKEN }}@github.com/yemf001/eado-app.git app
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -107,7 +107,7 @@ jobs:
     steps:
       - name: Checkout PRIVATE repo
         run: |
-          git clone https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/yemf001/eado-app.git app
+          git clone https://x-access-token:${{ secrets.PUBLIC_REPO_TOKEN }}@github.com/yemf001/eado-app.git app
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -150,7 +150,7 @@ jobs:
     steps:
       - name: Checkout PRIVATE repo
         run: |
-          git clone https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/yemf001/eado-app.git app
+          git clone https://x-access-token:${{ secrets.PUBLIC_REPO_TOKEN }}@github.com/yemf001/eado-app.git app
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -228,7 +228,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ github.repository_owner }}/eado-tool-download
-          token: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          token: ${{ secrets.PUBLIC_REPO_TOKEN }}
 
       - name: Generate latest.json
         run: |
