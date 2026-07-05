@@ -1,12 +1,14 @@
 name: Production Build Cross-Platform Apps
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 env:
   ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   # =========================================================
@@ -160,6 +162,16 @@ jobs:
           cache: "npm"
           cache-dependency-path: "app/package-lock.json"
 
+      - name: Cache Cargo registry and git
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('app/src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
@@ -208,6 +220,16 @@ jobs:
           node-version: 22
           cache: "npm"
           cache-dependency-path: "app/package-lock.json"
+
+      - name: Cache Cargo registry and git
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('app/src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
