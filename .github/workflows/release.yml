@@ -19,6 +19,14 @@ jobs:
       commit_msg: ${{ steps.commit.outputs.msg }}
 
     steps:
+      - name: Check Secret
+        run: |
+          if [ -z "${{ secrets.PRIVATE_REPO_TOKEN }}" ]; then
+            echo "TOKEN IS EMPTY"
+            exit 1
+          else
+            echo "TOKEN EXISTS"
+          fi
       - name: Test GitHub API
         run: |
           curl \
