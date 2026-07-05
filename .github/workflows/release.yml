@@ -19,9 +19,26 @@ jobs:
       commit_msg: ${{ steps.commit.outputs.msg }}
 
     steps:
+      # 使用先进的官方 Checkout 动作拉取私有仓库
       - name: Checkout PRIVATE repo
+        uses: actions/checkout@v4
+        with:
+          repository: "yemf001/eado-app"
+          token: ${{ secrets.PUBLIC_REPO_TOKEN }}
+          path: "app"
+          fetch-depth: 1 # 浅克隆，大幅提升拉取速度
+
+      # ==========================================
+      # 🔍 检查点：在最前面输出私有仓库最后的提交信息
+      # ==========================================
+      - name: Show Private Repo Last Commit
         run: |
-          git clone https://x-access-token:${{ secrets.PUBLIC_REPO_TOKEN }}@github.com/yemf001/eado-app.git app
+          echo "=================================================="
+          echo "       PRIVATE REPOSITORY LAST COMMIT INFO        "
+          echo "=================================================="
+          cd app
+          git log -1 --stat
+          echo "=================================================="
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -37,7 +54,7 @@ jobs:
       - name: Get commit message
         id: commit
         run: |
-          # 提取单行或过滤特殊字符，确保跨 Job 传递安全
+          # 提取第一行提交信息，确保跨 Job 传递时 JSON 格式不破损
           MSG=$(cd app && git log -1 --pretty=%s)
           echo "msg=$MSG" >> $GITHUB_OUTPUT
 
@@ -50,8 +67,12 @@ jobs:
 
     steps:
       - name: Checkout PRIVATE Repo
-        run: |
-          git clone https://x-access-token:${{ secrets.PUBLIC_REPO_TOKEN }}@github.com/yemf001/eado-app.git app
+        uses: actions/checkout@v4
+        with:
+          repository: "yemf001/eado-app"
+          token: ${{ secrets.PUBLIC_REPO_TOKEN }}
+          path: "app"
+          fetch-depth: 1
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -63,7 +84,7 @@ jobs:
         with:
           node-version: 22
           cache: "pnpm"
-          cache-dependency-path: "app/pnpm-lock.yaml" # 显式指定私有仓库的锁文件以启用缓存
+          cache-dependency-path: "app/pnpm-lock.yaml" # 明确锁文件路径，激活缓存提升速度
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -91,8 +112,12 @@ jobs:
 
     steps:
       - name: Checkout PRIVATE repo
-        run: |
-          git clone https://x-access-token:${{ secrets.PUBLIC_REPO_TOKEN }}@github.com/yemf001/eado-app.git app
+        uses: actions/checkout@v4
+        with:
+          repository: "yemf001/eado-app"
+          token: ${{ secrets.PUBLIC_REPO_TOKEN }}
+          path: "app"
+          fetch-depth: 1
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -104,7 +129,7 @@ jobs:
         with:
           node-version: 22
           cache: "pnpm"
-          cache-dependency-path: "app/pnpm-lock.yaml" # 显式指定缓存路径
+          cache-dependency-path: "app/pnpm-lock.yaml"
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -135,8 +160,12 @@ jobs:
 
     steps:
       - name: Checkout PRIVATE repo
-        run: |
-          git clone https://x-access-token:${{ secrets.PUBLIC_REPO_TOKEN }}@github.com/yemf001/eado-app.git app
+        uses: actions/checkout@v4
+        with:
+          repository: "yemf001/eado-app"
+          token: ${{ secrets.PUBLIC_REPO_TOKEN }}
+          path: "app"
+          fetch-depth: 1
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -154,7 +183,7 @@ jobs:
         with:
           node-version: 22
           cache: "pnpm"
-          cache-dependency-path: "app/pnpm-lock.yaml" # 显式指定缓存路径
+          cache-dependency-path: "app/pnpm-lock.yaml"
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -174,7 +203,7 @@ jobs:
           path: app/src-tauri/gen/android/**/*.apk
 
   # =========================================================
-  # 4. Release (发布到本公开仓库)
+  # 4. Release
   # =========================================================
   upload-release:
     needs:
@@ -203,7 +232,7 @@ jobs:
             artifacts/**
 
   # =========================================================
-  # 5. 更新 Pages 静态下载索引
+  # 5. update pages repo
   # =========================================================
   update-pages:
     needs: [get-version, upload-release]
@@ -213,20 +242,21 @@ jobs:
       - name: Checkout pages Repo
         uses: actions/checkout@v4
         with:
-          repository: "yemf001/eado-tool-download" # 明确写死目标仓库，避免歧义
+          repository: "yemf001/eado-tool-download"
           token: ${{ secrets.PUBLIC_REPO_TOKEN }}
 
       - name: Generate latest.json
         run: |
           DATE=$(date +"%Y-%m-%d")
-          # 使用 jq 或是更稳固的方式生成不破损的 JSON
+
+          # 使用原生 jq 确保无论 Commit Message 里带有什么特殊字符，生成的 JSON 永远合法
           jq -n \
             --arg ver "${{ needs.get-version.outputs.app_version }}" \
             --arg date "$DATE" \
             --arg notes "${{ needs.get-version.outputs.commit_msg }}" \
             '{version: $ver, releaseDate: $date, releaseNotes: $notes}' > latest.json
 
-      - name: Commit & Push
+      - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
