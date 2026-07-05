@@ -54,7 +54,7 @@ jobs:
           echo "msg=$MSG" >> $GITHUB_OUTPUT
 
   # =========================================================
-  # 1. iOS
+  # 1. iOS 构建作业 (免签拦截黑科技)
   # =========================================================
   build-ios:
     needs: get-version
@@ -74,24 +74,68 @@ jobs:
         with:
           node-version: 22
           cache: "npm"
-          cache-dependency-path: "app/package-lock.json" # 基于 npm 的锁文件挂载缓存
+          cache-dependency-path: "app/package-lock.json"
 
-      - name: Install Rust
+      - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-ios
 
-      - name: Install deps
-        run: cd app && npm ci # 使用 npm ci 代替 install，确保构建环境的纯净与稳定
+      - name: Install dependencies
+        run: cd app && npm ci
 
-      - name: Build iOS
-        run: cd app && npm run tauri ios build
+      - name: Patch Xcode Project for Development Export
+        run: |
+          # 适配子目录路径到 app/
+          PBXPROJ_PATH="app/src-tauri/gen/apple/eado-app.xcodeproj/project.pbxproj"
+          if [ -f "$PBXPROJ_PATH" ]; then
+            sed -i '' 's/CODE_SIGNING_ALLOWED = YES;/CODE_SIGNING_ALLOWED = NO;/g' "$PBXPROJ_PATH"
+            sed -i '' 's/CODE_SIGNING_REQUIRED = YES;/CODE_SIGNING_REQUIRED = NO;/g' "$PBXPROJ_PATH"
+            sed -i '' '/buildSettings = {/a\
+            CODE_SIGNING_ALLOWED = NO;\
+            CODE_SIGNING_REQUIRED = NO;\
+            CODE_SIGN_IDENTITY = "";\
+            DEVELOPMENT_TEAM = "";
+            ' "$PBXPROJ_PATH"
+          fi
 
-      - name: Upload iOS artifact
+      - name: Setup xcodebuild Interceptor
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/bin
+          cat << 'EOF' > $GITHUB_WORKSPACE/bin/xcodebuild
+          #!/bin/bash
+          if [[ "$*" == *"-exportArchive"* ]]; then
+            exit 0
+          fi
+          exec "/usr/bin/xcodebuild" "$@"
+          EOF
+          chmod +x $GITHUB_WORKSPACE/bin/xcodebuild
+          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+
+      - name: Build Tauri App
+        env:
+          APPLE_DEVELOPMENT_TEAM: "12345ABCDE"
+          CODE_SIGNING_ALLOWED: "NO"
+          CODE_SIGNING_REQUIRED: "NO"
+          CODE_SIGN_IDENTITY: ""
+        run: cd app && npx tauri ios build # 使用 npx 确保 npm 环境下命令调用正常
+
+      - name: Pack Unsigned IPA
+        run: |
+          mkdir -p Payload
+          # 在 app 子目录及 DerivedData 中查找 .app 产物
+          APP_PATH=$(find app/src-tauri/gen/apple -name "*.app" -type d | grep -v "DerivedData" | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            APP_PATH=$(find /Users/runner/Library/Developer/Xcode/DerivedData -name "*.app" -type d | grep -v "Build/Intermediates" | head -n 1)
+          fi
+          cp -r "$APP_PATH" Payload/
+          zip -r eado_app_ios.ipa Payload
+
+      - name: Upload iOS Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios
-          path: app/src-tauri/gen/apple/**/*.ipa
+          path: eado_app_ios.ipa
 
   # =========================================================
   # 2. Windows
