@@ -1,0 +1,237 @@
+name: Production Build Cross-Platform Apps
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: 'true'
+
+jobs:
+  # =========================================================
+  # 0. 拉取 PRIVATE 仓库 + 提取版本
+  # =========================================================
+  get-version:
+    runs-on: ubuntu-latest
+    outputs:
+      app_version: ${{ steps.version.outputs.version }}
+      commit_msg: ${{ steps.commit.outputs.msg }}
+
+    steps:
+      - name: Checkout PRIVATE repo
+        run: |
+          git clone https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/yemf001/eado-app.git app
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Read version from tauri.conf.json
+        id: version
+        run: |
+          VERSION=$(node -p "require('./app/src-tauri/tauri.conf.json').version")
+          echo "version=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Get commit message
+        id: commit
+        run: |
+          MSG=$(cd app && git log -1 --pretty=%B)
+
+          echo "msg<<EOF" >> $GITHUB_OUTPUT
+          echo "$MSG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  # =========================================================
+  # 1. iOS
+  # =========================================================
+  build-ios:
+    needs: get-version
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout PRIVATE repo
+        run: |
+          git clone https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/<PRIVATE_OWNER>/<PRIVATE_REPO>.git app
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios
+
+      - name: Install deps
+        run: cd app && pnpm install --frozen-lockfile
+
+      - name: Build iOS
+        run: cd app && pnpm tauri ios build
+
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios
+          path: app/src-tauri/gen/apple/**/*.ipa
+
+  # =========================================================
+  # 2. Windows
+  # =========================================================
+  build-windows:
+    needs: get-version
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout PRIVATE repo
+        run: |
+          git clone https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/<PRIVATE_OWNER>/<PRIVATE_REPO>.git app
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install deps
+        run: cd app && pnpm install --frozen-lockfile
+
+      - name: Build Windows
+        run: cd app && pnpm tauri build
+
+      - name: Collect EXE
+        shell: bash
+        run: |
+          cp app/src-tauri/target/release/*.exe ./eado_app_windows.exe
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: eado_app_windows.exe
+
+  # =========================================================
+  # 3. Android
+  # =========================================================
+  build-android:
+    needs: get-version
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PRIVATE repo
+        run: |
+          git clone https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/<PRIVATE_OWNER>/<PRIVATE_REPO>.git app
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Install deps
+        run: cd app && pnpm install --frozen-lockfile
+
+      - name: Build Android
+        run: cd app && pnpm tauri android build -- --apk --split-per-abi
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: app/src-tauri/gen/android/**/*.apk
+
+  # =========================================================
+  # 4. Release
+  # =========================================================
+  upload-release:
+    needs:
+      - get-version
+      - build-ios
+      - build-windows
+      - build-android
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ needs.get-version.outputs.app_version }}
+          name: Release ${{ needs.get-version.outputs.app_version }}
+          body: ${{ needs.get-version.outputs.commit_msg }}
+          files: |
+            artifacts/**
+
+  # =========================================================
+  # 5. update pages repo
+  # =========================================================
+  update-pages:
+    needs: upload-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout pages repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/eado-tool-download
+          token: ${{ secrets.PRIVATE_REPO_TOKEN }}
+
+      - name: Generate latest.json
+        run: |
+          DATE=$(date +"%Y-%m-%d")
+
+          cat > latest.json <<EOF
+          {
+            "version": "${{ needs.get-version.outputs.app_version }}",
+            "releaseDate": "$DATE",
+            "releaseNotes": "${{ needs.get-version.outputs.commit_msg }}"
+          }
+          EOF
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add latest.json
+          git commit -m "update" || exit 0
+          git push
