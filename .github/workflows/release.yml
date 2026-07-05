@@ -51,9 +51,9 @@ jobs:
     runs-on: macos-15
 
     steps:
-      - name: Checkout PRIVATE repo
+      - name: Checkout PRIVATE Repo
         run: |
-          git clone https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/<PRIVATE_OWNER>/<PRIVATE_REPO>.git app
+          git clone https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/yemf001/eado-app.git app
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -93,7 +93,7 @@ jobs:
     steps:
       - name: Checkout PRIVATE repo
         run: |
-          git clone https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/<PRIVATE_OWNER>/<PRIVATE_REPO>.git app
+          git clone https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/yemf001/eado-app.git app
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -136,7 +136,7 @@ jobs:
     steps:
       - name: Checkout PRIVATE repo
         run: |
-          git clone https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/<PRIVATE_OWNER>/<PRIVATE_REPO>.git app
+          git clone https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/yemf001/eado-app.git app
 
       - name: Setup Java
         uses: actions/setup-java@v4
