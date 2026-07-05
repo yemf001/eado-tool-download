@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: 'true'
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
 
 jobs:
   # =========================================================
@@ -19,20 +19,6 @@ jobs:
       commit_msg: ${{ steps.commit.outputs.msg }}
 
     steps:
-      - name: Check Secret
-        run: |
-          if [ -z "${{ secrets.PUBLIC_REPO_TOKEN }}" ]; then
-            echo "TOKEN IS EMPTY"
-            exit 1
-          else
-            echo "TOKEN EXISTS"
-          fi
-      - name: Test GitHub API
-        run: |
-          curl \
-            -H "Authorization: Bearer ${{ secrets.PUBLIC_REPO_TOKEN }}" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/yemf001/eado-app
       - name: Checkout PRIVATE repo
         run: |
           git clone https://x-access-token:${{ secrets.PUBLIC_REPO_TOKEN }}@github.com/yemf001/eado-app.git app
@@ -51,11 +37,9 @@ jobs:
       - name: Get commit message
         id: commit
         run: |
-          MSG=$(cd app && git log -1 --pretty=%B)
-
-          echo "msg<<EOF" >> $GITHUB_OUTPUT
-          echo "$MSG" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          # 提取单行或过滤特殊字符，确保跨 Job 传递安全
+          MSG=$(cd app && git log -1 --pretty=%s)
+          echo "msg=$MSG" >> $GITHUB_OUTPUT
 
   # =========================================================
   # 1. iOS
@@ -78,7 +62,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'pnpm'
+          cache: "pnpm"
+          cache-dependency-path: "app/pnpm-lock.yaml" # 显式指定私有仓库的锁文件以启用缓存
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -118,7 +103,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'pnpm'
+          cache: "pnpm"
+          cache-dependency-path: "app/pnpm-lock.yaml" # 显式指定缓存路径
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -167,7 +153,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'pnpm'
+          cache: "pnpm"
+          cache-dependency-path: "app/pnpm-lock.yaml" # 显式指定缓存路径
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -187,7 +174,7 @@ jobs:
           path: app/src-tauri/gen/android/**/*.apk
 
   # =========================================================
-  # 4. Release
+  # 4. Release (发布到本公开仓库)
   # =========================================================
   upload-release:
     needs:
@@ -195,7 +182,6 @@ jobs:
       - build-ios
       - build-windows
       - build-android
-
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -217,35 +203,33 @@ jobs:
             artifacts/**
 
   # =========================================================
-  # 5. update pages repo
+  # 5. 更新 Pages 静态下载索引
   # =========================================================
   update-pages:
-    needs: upload-release
+    needs: [get-version, upload-release]
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout pages Repo
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/eado-tool-download
+          repository: "yemf001/eado-tool-download" # 明确写死目标仓库，避免歧义
           token: ${{ secrets.PUBLIC_REPO_TOKEN }}
 
       - name: Generate latest.json
         run: |
           DATE=$(date +"%Y-%m-%d")
+          # 使用 jq 或是更稳固的方式生成不破损的 JSON
+          jq -n \
+            --arg ver "${{ needs.get-version.outputs.app_version }}" \
+            --arg date "$DATE" \
+            --arg notes "${{ needs.get-version.outputs.commit_msg }}" \
+            '{version: $ver, releaseDate: $date, releaseNotes: $notes}' > latest.json
 
-          cat > latest.json <<EOF
-          {
-            "version": "${{ needs.get-version.outputs.app_version }}",
-            "releaseDate": "$DATE",
-            "releaseNotes": "${{ needs.get-version.outputs.commit_msg }}"
-          }
-          EOF
-
-      - name: Commit
+      - name: Commit & Push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add latest.json
-          git commit -m "update" || exit 0
+          git commit -m "update release metadata to ${{ needs.get-version.outputs.app_version }}" || exit 0
           git push
