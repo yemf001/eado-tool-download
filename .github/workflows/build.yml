@@ -1,4 +1,4 @@
-name: build
+name: public-build
 
 on:
   repository_dispatch:
@@ -9,11 +9,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout public repo
         uses: actions/checkout@v4
 
-      - name: Install deps
-        run: npm install
-
-      - name: Build
-        run: npm run build
+      - name: Show trigger info
+        run: |
+          echo "Triggered from private repo"
+          echo "SHA: ${{ github.event.client_payload.sha }}"
