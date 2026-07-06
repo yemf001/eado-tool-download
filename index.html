@@ -1,83 +1,410 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的第一个 GitHub Pages 网站</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EADO App 官方下载站</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #333;
-        }
-        .card {
-            background: white;
-            padding: 2.5rem;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-            transition: transform 0.3s ease;
-        }
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        h1 {
-            color: #4a5568;
-            margin-bottom: 1rem;
-            font-size: 1.8rem;
-        }
-        p {
-            color: #718096;
-            margin-bottom: 1.5rem;
-            line-height: 1.6;
-        }
-        .btn {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 0.8rem 1.5rem;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: background 0.2s ease;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        .btn:hover {
-            background: #5a67d8;
-        }
-        .footer {
-            margin-top: 2rem;
-            font-size: 0.8rem;
-            color: #a0aec0;
-        }
-    </style>
-</head>
-<body>
+      :root {
+        --bg-color: #f4f7f6;
+        --card-bg: #ffffff;
+        --text-main: #2c3e50;
+        --text-muted: #7f8c8d;
+        --primary: #3498db;
+        --primary-hover: #2980b9;
+        --android-color: #2ecc71;
+        --apple-color: #000000;
+        --windows-color: #0078d4;
+      }
 
-    <div class="card">
-        <h1>🎉 成功了！</h1>
-        <p>这是我的第一个 GitHub Pages 静态网页。它已经成功部署并向全世界公开访问了！</p>
-        <button class="btn" onclick="celebrate()">点我庆祝一下</button>
-        <div class="footer">Powered by GitHub Pages</div>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        line-height: 1.6;
+        padding: 40px 20px;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      /* 头部设计 */
+      header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: #1a252f;
+      }
+
+      .meta-info {
+        font-size: 0.95rem;
+        color: var(--text-muted);
+      }
+
+      .meta-info span {
+        margin: 0 10px;
+      }
+
+      .badge {
+        background-color: var(--primary);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: bold;
+      }
+
+      /* 卡片通用样式 */
+      .card {
+        background: var(--card-bg);
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        margin-bottom: 25px;
+      }
+
+      .card-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 2px solid #f0f3f5;
+        padding-bottom: 10px;
+      }
+
+      /* 更新日志样式 */
+      .changelog-list {
+        list-style: none;
+        padding-left: 5px;
+      }
+
+      .changelog-list li {
+        margin-bottom: 8px;
+        position: relative;
+        padding-left: 20px;
+        color: #34495e;
+        white-space: pre-wrap; /* 支持换行 */
+      }
+
+      .changelog-list li::before {
+        content: "•";
+        color: var(--primary);
+        font-weight: bold;
+        font-size: 1.2rem;
+        position: absolute;
+        left: 0;
+        top: -2px;
+      }
+
+      /* 下载网格布局 */
+      .download-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+      }
+
+      .platform-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+      }
+
+      .platform-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
+      }
+
+      .platform-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+      }
+
+      /* 各平台独特色彩 */
+      .android .platform-icon {
+        color: var(--android-color);
+      }
+      .apple .platform-icon {
+        color: var(--apple-color);
+      }
+      .windows .platform-icon {
+        color: var(--windows-color);
+      }
+
+      .platform-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+      }
+
+      /* 按钮通用样式 */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 12px 20px;
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .btn:hover {
+        background-color: var(--primary-hover);
+      }
+
+      /* 下拉选择包装盒 */
+      .dropdown-container {
+        width: 100%;
+        position: relative;
+      }
+
+      .select-arch {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        background-color: white;
+        font-size: 0.95rem;
+        color: var(--text-main);
+        outline: none;
+        cursor: pointer;
+        margin-bottom: 10px;
+        appearance: none; /* 清除默认样式 */
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 16px;
+      }
+
+      /* 骨架屏加载动画 */
+      .loading {
+        text-align: center;
+        padding: 50px;
+        font-size: 1.2rem;
+        color: var(--text-muted);
+      }
+
+      .loading i {
+        margin-bottom: 10px;
+        font-size: 2rem;
+        animation: spin 1s infinite linear;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* 隐藏元素的类 */
+      .hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div id="loading-view" class="loading">
+        <i class="fa-solid fa-circle-notch"></i>
+        <div>正在获取最新版本信息...</div>
+      </div>
+
+      <div id="main-view" class="hidden">
+        <header>
+          <h1 id="app-title">EADO App</h1>
+          <div class="meta-info">
+            <span
+              >当前版本: <mark id="version-tag" class="badge">---</mark></span
+            >
+            <span>更新时间: <span id="release-date">---</span></span>
+          </div>
+        </header>
+
+        <div class="card">
+          <div class="card-title">
+            <i
+              class="fa-solid fa-clock-rotate-left"
+              style="color: var(--primary)"
+            ></i>
+            更新日志
+          </div>
+          <ul id="changelog-content" class="changelog-list"></ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <i class="fa-solid fa-download" style="color: var(--primary)"></i>
+            软件下载
+          </div>
+
+          <div class="download-grid">
+            <div class="platform-card android">
+              <div class="platform-body">
+                <div class="platform-icon">
+                  <i class="fa-brands fa-android"></i>
+                </div>
+                <div class="platform-name">Android 端</div>
+              </div>
+              <div class="dropdown-container">
+                <select id="android-arch-select" class="select-arch"></select>
+                <a id="btn-android" href="#" class="btn"
+                  ><i class="fa-solid fa-down-long"></i> 安全下载</a
+                >
+              </div>
+            </div>
+
+            <div class="platform-card apple">
+              <div class="platform-body">
+                <div class="platform-icon">
+                  <i class="fa-brands fa-apple"></i>
+                </div>
+                <div class="platform-name">iOS 免签版</div>
+              </div>
+              <a id="btn-ios" href="#" class="btn" target="_blank"
+                ><i class="fa-solid fa-down-long"></i> 立即安装</a
+              >
+            </div>
+
+            <div class="platform-card windows">
+              <div class="platform-body">
+                <div class="platform-icon">
+                  <i class="fa-brands fa-windows"></i>
+                </div>
+                <div class="platform-name">Windows 桌面端</div>
+              </div>
+              <a id="btn-windows" href="#" class="btn" target="_blank"
+                ><i class="fa-solid fa-down-long"></i> 格式下载</a
+              >
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script>
-        function celebrate() {
-            alert('🚀 祝贺你迈出了网页部署的第一步！继续加油！');
+      document.addEventListener("DOMContentLoaded", () => {
+        // 👈 统一使用 GitHub Pages 生产环境的绝对路径，并追加时间戳规避 CDN 强缓存
+        const JSON_URL =
+          "/eado-tool-download/latest.json?t=" + new Date().getTime();
+
+        fetch(JSON_URL)
+          .then((response) => {
+            if (!response.ok) throw new Error("未找到配置文件");
+            return response.json();
+          })
+          .then((data) => {
+            renderPage(data);
+          })
+          .catch((err) => {
+            console.error(err);
+            document.getElementById("loading-view").innerHTML = `
+                            <i class="fa-solid fa-triangle-exclamation" style="color: #e74c3c; animation:none;"></i>
+                            <div style="margin-top:10px; color:#e74c3c;">加载失败，请检查 yemf001.github.io 下的 latest.json 是否存在</div>
+                        `;
+          });
+      });
+
+      function renderPage(data) {
+        // 1. 填入基础版本和日期元数据
+        document.getElementById("version-tag").innerText = data.version;
+        document.getElementById("release-date").innerText = data.releaseDate;
+
+        // 2. 动态渲染更新日志列表
+        const changelogContainer = document.getElementById("changelog-content");
+        changelogContainer.innerHTML = "";
+
+        const notesArray = data.releaseNotes.split(/\n/);
+        notesArray.forEach((note) => {
+          const cleanNote = note.trim();
+          if (cleanNote) {
+            const text = cleanNote.startsWith("-")
+              ? cleanNote.substring(1).trim()
+              : cleanNote;
+            const li = document.createElement("li");
+            li.innerText = text;
+            changelogContainer.appendChild(li);
+          }
+        });
+
+        // 3. 渲染静态单直链平台 (iOS 和 Windows)
+        if (data.platforms.ios) {
+          document.getElementById("btn-ios").href = data.platforms.ios.url;
         }
+        if (data.platforms.windows) {
+          document.getElementById("btn-windows").href =
+            data.platforms.windows.url;
+        }
+
+        // 4. 动态渲染 Android 多子链接 (SubLinks 处理)
+        if (data.platforms.android && data.platforms.android.subLinks) {
+          const selectElement = document.getElementById("android-arch-select");
+          const androidBtn = document.getElementById("btn-android");
+          const subLinks = data.platforms.android.subLinks;
+
+          selectElement.innerHTML = "";
+          subLinks.forEach((item) => {
+            const opt = document.createElement("option");
+            opt.value = item.url;
+            opt.innerText = `${item.arch} 架构包`;
+            if (item.arch.toLowerCase() === "universal") {
+              opt.selected = true;
+            }
+            selectElement.appendChild(opt);
+          });
+
+          // 初始化按钮默认指向
+          androidBtn.href = selectElement.value;
+
+          // 监听下拉菜单切换
+          selectElement.addEventListener("change", (e) => {
+            androidBtn.href = e.target.value;
+          });
+        }
+
+        // 5. 切换视图展现
+        document.getElementById("loading-view").classList.add("hidden");
+        document.getElementById("main-view").classList.remove("hidden");
+      }
     </script>
-</body>
+  </body>
 </html>
