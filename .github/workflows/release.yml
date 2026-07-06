@@ -308,20 +308,20 @@ jobs:
           IOS_URL="${REPO_URL}/releases/download/latest/eado_app_ios.ipa"
           WINDOWS_URL="${REPO_URL}/releases/download/latest/eado_app_windows.exe"
 
-          # 2. 拼装 Android 各架构子包的链接（依据 Tauri 生成包名习惯定义）
-          APK_UNIVERSAL="${REPO_URL}/releases/download/latest/app-x86-release.apk"
+          # 2. 拼装 Android 各架构子包的链接
+          APK_X86="${REPO_URL}/releases/download/latest/app-x86-release.apk"
           APK_ARM64="${REPO_URL}/releases/download/latest/app-arm64-release.apk"
           APK_ARMV7="${REPO_URL}/releases/download/latest/app-arm-release.apk"
           APK_X86_64="${REPO_URL}/releases/download/latest/app-x86_64-release.apk"
 
-          # 3. 使用 jq 丰富数据结构
+          # 3. 使用 jq 丰富数据结构 (注意：这里改成了 --arg apk_x86)
           jq -n \
             --arg ver "$VERSION" \
             --arg date "$DATE" \
             --arg notes "${{ needs.get-version.outputs.commit_msg }}" \
             --arg ios_url "$IOS_URL" \
             --arg win_url "$WINDOWS_URL" \
-            --arg apk_uni "$APK_UNIVERSAL" \
+            --arg apk_x86 "$APK_X86" \
             --arg apk_a64 "$APK_ARM64" \
             --arg apk_av7 "$APK_ARMV7" \
             --arg apk_x64 "$APK_X86_64" \
@@ -363,7 +363,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add latest.json
-          
+
           if git diff --staged --quiet; then
             echo "No changes in latest.json, skipping push."
           else
