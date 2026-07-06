@@ -1,5 +1,45 @@
 {
   "version": "v2.0.5",
-  "releaseDate": "2026-07-05",
-  "releaseNotes": "pnpm 切换为 npm"
+  "releaseDate": "2026-07-06",
+  "releaseNotes": "pnpm 切换为 npm",
+  "platforms": {
+    "android": {
+      "name": "Android",
+      "icon": "android",
+      "subLinks": [
+        {
+          "arch": "Universal",
+          "filename": "app-universal-release.apk",
+          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.5/app-universal-release.apk"
+        },
+        {
+          "arch": "arm64-v8a",
+          "filename": "app-arm64-v8a-release.apk",
+          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.5/app-arm64-v8a-release.apk"
+        },
+        {
+          "arch": "armeabi-v7a",
+          "filename": "app-armeabi-v7a-release.apk",
+          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.5/app-armeabi-v7a-release.apk"
+        },
+        {
+          "arch": "x86_64",
+          "filename": "app-x86_64-release.apk",
+          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.5/app-x86_64-release.apk"
+        }
+      ]
+    },
+    "ios": {
+      "name": "iOS (免签版)",
+      "icon": "apple",
+      "filename": "eado_app_ios.ipa",
+      "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.5/eado_app_ios.ipa"
+    },
+    "windows": {
+      "name": "Windows",
+      "icon": "windows",
+      "filename": "eado_app_windows.exe",
+      "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.5/eado_app_windows.exe"
+    }
+  }
 }
