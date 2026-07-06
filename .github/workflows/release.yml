@@ -52,8 +52,14 @@ jobs:
       - name: Get commit message
         id: commit
         run: |
-          MSG=$(cd app && git log -1 --pretty=%s)
-          echo "msg=$MSG" >> $GITHUB_OUTPUT
+          cd app
+          # 1. 提取前 5 条提交摘要，每条前面加上 "- " 变成列表格式
+          # 2. 并在最后一行加上 "..."
+          echo "MSG<<EOF" >> $GITHUB_OUTPUT
+          git log -5 --pretty="format:- %s" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "..." >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
   # =========================================================
   # 1. iOS 构建作业
@@ -299,14 +305,14 @@ jobs:
           REPO_URL="https://github.com/${{ github.repository }}"
 
           # 1. 拼装 iOS & Windows
-          IOS_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_ios.ipa"
-          WINDOWS_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_windows.exe"
+          IOS_URL="${REPO_URL}/releases/download/latest/eado_app_ios.ipa"
+          WINDOWS_URL="${REPO_URL}/releases/download/latest/eado_app_windows.exe"
 
           # 2. 拼装 Android 各架构子包的链接（依据 Tauri 生成包名习惯定义）
-          APK_UNIVERSAL="${REPO_URL}/releases/download/${VERSION}/app-universal-release.apk"
-          APK_ARM64="${REPO_URL}/releases/download/${VERSION}/app-arm64-v8a-release.apk"
-          APK_ARMV7="${REPO_URL}/releases/download/${VERSION}/app-armeabi-v7a-release.apk"
-          APK_X86_64="${REPO_URL}/releases/download/${VERSION}/app-x86_64-release.apk"
+          APK_UNIVERSAL="${REPO_URL}/releases/download/latest/app-x86-release.apk"
+          APK_ARM64="${REPO_URL}/releases/download/latest/app-arm64-release.apk"
+          APK_ARMV7="${REPO_URL}/releases/download/latest/app-arm-release.apk"
+          APK_X86_64="${REPO_URL}/releases/download/latest/app-x86_64-release.apk"
 
           # 3. 使用 jq 丰富数据结构
           jq -n \
@@ -328,14 +334,14 @@ jobs:
                   name: "Android",
                   icon: "android",
                   subLinks: [
-                    { arch: "Universal", filename: "app-universal-release.apk", url: $apk_uni },
-                    { arch: "arm64-v8a", filename: "app-arm64-v8a-release.apk", url: $apk_a64 },
-                    { arch: "armeabi-v7a", filename: "app-armeabi-v7a-release.apk", url: $apk_av7 },
+                    { arch: "arm64-v8a", filename: "app-arm64-release.apk", url: $apk_a64 },
+                    { arch: "armeabi-v7a", filename: "app-arm-release.apk", url: $apk_av7 },
+                    { arch: "x86", filename: "app-x86-release.apk", url: $apk_x86 },
                     { arch: "x86_64", filename: "app-x86_64-release.apk", url: $apk_x64 }
                   ]
                 },
                 ios: {
-                  name: "iOS (免签版)",
+                  name: "iOS (未签名版)",
                   icon: "apple",
                   filename: "eado_app_ios.ipa",
                   url: $ios_url
@@ -357,11 +363,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add latest.json
-
+          
           if git diff --staged --quiet; then
             echo "No changes in latest.json, skipping push."
           else
-            # 👈 动态 Commit 信息：格式为 "chore(release): deploy vX.X.X - 真实更新日志"
-            git commit -m "chore(release): deploy $APP_VERSION - $COMMIT_MSG"
+            # 因为 COMMIT_MSG 现在有多行，这里会完美识别为：第一行是标题，后续是详细内容
+            git commit -m "chore(release): deploy $APP_VERSION" -m "$COMMIT_MSG"
             git push origin pages
           fi
