@@ -27,16 +27,7 @@ jobs:
           repository: "yemf001/eado-app"
           token: ${{ secrets.PUBLIC_REPO_TOKEN }}
           path: "app"
-          fetch-depth: 1
-
-      - name: Show Private Repo Last Commit
-        run: |
-          echo "=================================================="
-          echo "     PRIVATE REPOSITORY LAST COMMIT INFO        "
-          echo "=================================================="
-          cd app
-          git log -1 --stat
-          echo "=================================================="
+          fetch-depth: 10 # 👈 确保至少拉取 5 条以上的历史，否则 git log -5 会落空
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -53,13 +44,15 @@ jobs:
         id: commit
         run: |
           cd app
-          # 1. 提取前 5 条提交摘要，每条前面加上 "- " 变成列表格式
-          # 2. 并在最后一行加上 "..."
-          echo "MSG<<EOF" >> $GITHUB_OUTPUT
+
+          # 使用一个唯一的随机标记作为多行边界，防止日志内容冲突
+          EOF_MARKER=$(dd if=/dev/urandom bs=15 count=1 2>/dev/null | base64 | tr -dc 'a-zA-Z')
+
+          echo "msg<<$EOF_MARKER" >> $GITHUB_OUTPUT
           git log -5 --pretty="format:- %s" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "..." >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "$EOF_MARKER" >> $GITHUB_OUTPUT
 
   # =========================================================
   # 1. iOS 构建作业
@@ -301,20 +294,20 @@ jobs:
           DATE=$(date +"%Y-%m-%d")
           VERSION="${{ needs.get-version.outputs.app_version }}"
 
-          # 根据 Release 发布的公共仓地址动态生成（如果就在当前仓发布，保持如下即可）
           REPO_URL="https://github.com/${{ github.repository }}"
 
-          # 1. 拼装 iOS & Windows
-          IOS_URL="${REPO_URL}/releases/download/latest/eado_app_ios.ipa"
-          WINDOWS_URL="${REPO_URL}/releases/download/latest/eado_app_windows.exe"
+          # 🌟 这里丢弃不稳定的 "latest" 路径，直接锁定当前构建的具体版本号 (例如 v1.x.x)
+          # 这样只要 Release 成功，链接就永远不会 404
+          IOS_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_ios.ipa"
+          WINDOWS_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_windows.exe"
 
-          # 2. 拼装 Android 各架构子包的链接
-          APK_X86="${REPO_URL}/releases/download/latest/app-x86-release.apk"
-          APK_ARM64="${REPO_URL}/releases/download/latest/app-arm64-release.apk"
-          APK_ARMV7="${REPO_URL}/releases/download/latest/app-arm-release.apk"
-          APK_X86_64="${REPO_URL}/releases/download/latest/app-x86_64-release.apk"
+          # Android 各架构子包的链接
+          APK_X86="${REPO_URL}/releases/download/${VERSION}/app-x86-release.apk"
+          APK_ARM64="${REPO_URL}/releases/download/${VERSION}/app-arm64-release.apk"
+          APK_ARMV7="${REPO_URL}/releases/download/${VERSION}/app-arm-release.apk"
+          APK_X86_64="${REPO_URL}/releases/download/${VERSION}/app-x86_64-release.apk"
 
-          # 3. 使用 jq 丰富数据结构 (注意：这里改成了 --arg apk_x86)
+          # 使用 jq 丰富数据结构
           jq -n \
             --arg ver "$VERSION" \
             --arg date "$DATE" \
