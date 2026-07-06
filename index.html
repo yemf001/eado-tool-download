@@ -23,6 +23,9 @@
         --apple-hover: #2c3e50;
         --windows-color: #0078d4;
         --windows-hover: #005a9e;
+        --warning-bg: #fff9db; /* 👈 新增：提示框背景色 */
+        --warning-border: #ffe066; /* 👈 新增：提示框边框色 */
+        --warning-text: #856404; /* 👈 新增：提示框文字颜色 */
       }
 
       * {
@@ -42,7 +45,7 @@
       }
 
       .container {
-        max-width: 850px;
+        max-width: 1100px;
         margin: 0 auto;
       }
 
@@ -76,17 +79,23 @@
         font-weight: bold;
       }
 
-      /* 卡片样式 */
+      .main-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 25px;
+        align-items: start;
+      }
+
+      /* 卡片基础设计 */
       .card {
         background: var(--card-bg);
         border-radius: 16px;
         padding: 30px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        margin-bottom: 25px;
       }
 
       .card-title {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
         font-weight: 600;
         margin-bottom: 20px;
         display: flex;
@@ -96,18 +105,19 @@
         padding-bottom: 10px;
       }
 
-      /* 更新日志 */
+      /* 更新日志列表 */
       .changelog-list {
         list-style: none;
         padding-left: 5px;
       }
 
       .changelog-list li {
-        margin-bottom: 8px;
+        margin-bottom: 12px;
         position: relative;
         padding-left: 20px;
         color: #34495e;
         white-space: pre-wrap;
+        font-size: 0.95rem;
       }
 
       .changelog-list li::before {
@@ -120,10 +130,10 @@
         top: -2px;
       }
 
-      /* 下载网格 */
-      .download-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      /* 下载区域垂直链条 */
+      .download-stack {
+        display: flex;
+        flex-direction: column;
         gap: 20px;
       }
 
@@ -131,24 +141,28 @@
         background: #f8fafc;
         border: 1px solid #e2e8f0;
         border-radius: 12px;
-        padding: 25px 20px;
-        text-align: center;
+        padding: 20px;
         display: flex;
         flex-direction: column;
-        align-items: center;
+        gap: 15px;
         transition:
           transform 0.2s,
           box-shadow 0.2s;
       }
 
       .platform-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.04);
+      }
+
+      .platform-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
       }
 
       .platform-icon {
-        font-size: 3rem;
-        margin-bottom: 10px;
+        font-size: 1.8rem;
       }
 
       .android .platform-icon {
@@ -162,31 +176,29 @@
       }
 
       .platform-name {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: 600;
-        margin-bottom: 20px;
       }
 
-      /* 按钮通用样式 */
+      /* 按钮通用设计 */
       .btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 8px;
-        width: 100%;
-        padding: 12px 20px;
+        padding: 11px 20px;
         color: white;
         border: none;
         border-radius: 8px;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         font-weight: 500;
         text-decoration: none;
         cursor: pointer;
         transition: background 0.2s;
-        margin-top: auto;
+        max-width: 280px;
+        width: 100%;
       }
 
-      /* 独立平台的按钮颜色 */
       .btn-android {
         background-color: var(--android-color);
       }
@@ -208,15 +220,37 @@
         background-color: var(--windows-hover);
       }
 
-      /* 安卓独立按钮列表容器 */
+      /* 安卓多子包 */
       .android-btn-group {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
         gap: 10px;
+        width: 100%;
       }
 
-      /* 骨架屏加载 */
+      .android-btn-group .btn {
+        max-width: 100%;
+      }
+
+      /* 👈 新增：iOS 独占说明提示框样式 */
+      .ios-notice {
+        background-color: var(--warning-bg);
+        border: 1px solid var(--warning-border);
+        color: var(--warning-text);
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        width: 100%;
+      }
+      .ios-notice i {
+        margin-top: 3px;
+        font-size: 1rem;
+      }
+
+      /* 骨架屏 */
       .loading {
         text-align: center;
         padding: 50px;
@@ -242,11 +276,42 @@
       .hidden {
         display: none !important;
       }
+
+      /* 电脑端/大屏设备媒体查询适配 */
+      @media (min-width: 768px) {
+        .main-layout {
+          grid-template-columns: 4fr 5fr;
+        }
+
+        .platform-card {
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+          padding: 20px 25px;
+        }
+
+        /* 👈 调整电脑端的弹性盒行为，让提示框整体换行靠下显示 */
+        .apple {
+          flex-wrap: wrap;
+        }
+        .apple .platform-header {
+          min-width: 150px;
+        }
+
+        .android {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .btn {
+          max-width: 200px;
+        }
+      }
     </style>
   </head>
   <body>
     <div class="container">
-      <!-- 加载状态提示 -->
+      <!-- 加载状态 -->
       <div id="loading-view" class="loading">
         <i class="fa-solid fa-circle-notch"></i>
         <div>正在获取最新版本信息...</div>
@@ -264,98 +329,112 @@
           </div>
         </header>
 
-        <!-- 卡片 1: 更新日志 -->
-        <div class="card">
-          <div class="card-title">
-            <i
-              class="fa-solid fa-clock-rotate-left"
-              style="color: var(--primary)"
-            ></i>
-            更新日志
+        <!-- 响应式双列包裹层 -->
+        <div class="main-layout">
+          <!-- 左侧/上侧: 更新日志 -->
+          <div class="card" style="height: 100%">
+            <div class="card-title">
+              <i
+                class="fa-solid fa-clock-rotate-left"
+                style="color: var(--primary)"
+              ></i>
+              更新日志
+            </div>
+            <ul id="changelog-content" class="changelog-list"></ul>
           </div>
-          <ul id="changelog-content" class="changelog-list"></ul>
+
+          <!-- 右侧/下侧: 软件下载 -->
+          <div class="card">
+            <div class="card-title">
+              <i class="fa-solid fa-download" style="color: var(--primary)"></i>
+              软件下载
+            </div>
+
+            <div class="download-stack">
+              <!-- Android -->
+              <div class="platform-card android">
+                <div class="platform-header">
+                  <div class="platform-icon">
+                    <i class="fa-brands fa-android"></i>
+                  </div>
+                  <div class="platform-name">Android 端</div>
+                </div>
+                <div id="android-buttons" class="android-btn-group"></div>
+              </div>
+
+              <!-- iOS -->
+              <div class="platform-card apple">
+                <div class="platform-header">
+                  <div class="platform-icon">
+                    <i class="fa-brands fa-apple"></i>
+                  </div>
+                  <div class="platform-name">iOS 免签版</div>
+                </div>
+                <a id="btn-ios" href="#" class="btn btn-ios" target="_blank"
+                  >下载</a
+                >
+
+                <!-- 👈 新增：iOS 自签名说明组件 -->
+                <div class="ios-notice">
+                  <i class="fa-solid fa-circle-exclamation"></i>
+                  <div>
+                    该安装包未进行证书签名。下载后需要使用自己的 Apple ID
+                    或自签工具（如巨魔、AltStore、轻松签等）进行签名后方可正常安装。
+                  </div>
+                </div>
+              </div>
+
+              <!-- Windows -->
+              <div class="platform-card windows">
+                <div class="platform-header">
+                  <div class="platform-icon">
+                    <i class="fa-brands fa-windows"></i>
+                  </div>
+                  <div class="platform-name">Windows 端</div>
+                </div>
+                <a
+                  id="btn-windows"
+                  href="#"
+                  class="btn btn-windows"
+                  target="_blank"
+                  >下载</a
+                >
+              </div>
+            </div>
+          </div>
         </div>
-
-        <!-- 卡片 2: 软件下载 -->
-        <div class="card">
-          <div class="card-title">
-            <i class="fa-solid fa-download" style="color: var(--primary)"></i>
-            软件下载
-          </div>
-
-          <div class="download-grid">
-            <!-- Android 平台卡片 -->
-            <div class="platform-card android">
-              <div class="platform-icon">
-                <i class="fa-brands fa-android"></i>
-              </div>
-              <div class="platform-name">Android 端</div>
-              <!-- 👈 这里改成了按钮容器，用来直接铺开所有架构包 -->
-              <div id="android-buttons" class="android-btn-group"></div>
-            </div>
-
-            <!-- iOS 平台卡片 -->
-            <div class="platform-card apple">
-              <div class="platform-icon">
-                <i class="fa-brands fa-apple"></i>
-              </div>
-              <div class="platform-name">iOS 免签版</div>
-              <a id="btn-ios" href="#" class="btn btn-ios" target="_blank"
-                ><i class="fa-solid fa-down-long"></i> 立即安装</a
-              >
-            </div>
-
-            <!-- Windows 平台卡片 -->
-            <div class="platform-card windows">
-              <div class="platform-icon">
-                <i class="fa-brands fa-windows"></i>
-              </div>
-              <div class="platform-name">Windows 桌面端</div>
-              <a
-                id="btn-windows"
-                href="#"
-                class="btn btn-windows"
-                target="_blank"
-                ><i class="fa-solid fa-down-long"></i> 格式下载</a
-              >
-            </div>
-          </div>
-        </div>
+        <!-- layout end -->
       </div>
     </div>
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        // 从指定的绝对路径拉取最新的配置 JSON
         const JSON_URL =
-          "/eado-tool-download/latest.json?t=" + new Date().getTime();
+          "/eado-tool-download/latest.json?t=" +
+          new Date().getTime();
 
         fetch(JSON_URL)
           .then((response) => {
-            if (!response.ok) throw new Error("未找到配置文件");
+            if (!response.ok) throw new Error("网络异常");
             return response.json();
           })
-          .then((data) => {
-            renderPage(data);
-          })
+          .then((data) => renderPage(data))
           .catch((err) => {
             console.error(err);
             document.getElementById("loading-view").innerHTML = `
                         <i class="fa-solid fa-triangle-exclamation" style="color: #e74c3c; animation:none;"></i>
-                        <div style="margin-top:10px; color:#e74c3c;">加载失败，请检查远程配置源是否正常</div>
+                        <div style="margin-top:10px; color:#e74c3c;">加载失败，请检查配置源</div>
                     `;
           });
       });
 
       function renderPage(data) {
-        // 1. 填入基础版本和日期元数据
         document.getElementById("version-tag").innerText = data.version;
         document.getElementById("release-date").innerText = data.releaseDate;
 
-        // 2. 动态渲染更新日志列表
+        // 渲染日志
         const changelogContainer = document.getElementById("changelog-content");
         changelogContainer.innerHTML = "";
-
         const notesArray = data.releaseNotes.split(/\n/);
         notesArray.forEach((note) => {
           const cleanNote = note.trim();
@@ -369,16 +448,14 @@
           }
         });
 
-        // 3. 渲染静态单直链平台 (iOS 和 Windows)
-        if (data.platforms.ios) {
+        // 静态单链接注入
+        if (data.platforms.ios)
           document.getElementById("btn-ios").href = data.platforms.ios.url;
-        }
-        if (data.platforms.windows) {
+        if (data.platforms.windows)
           document.getElementById("btn-windows").href =
             data.platforms.windows.url;
-        }
 
-        // 4. 👈 动态渲染 Android 所有子按钮，直接平铺展示
+        // 安卓按钮群渲染
         if (data.platforms.android && data.platforms.android.subLinks) {
           const btnContainer = document.getElementById("android-buttons");
           btnContainer.innerHTML = "";
@@ -388,21 +465,17 @@
             btn.href = item.url;
             btn.className = "btn btn-android";
             btn.target = "_blank";
-            // 按钮文字根据架构动态调整，如果是 Universal 就突出显示，其他显示架构名
-            btn.innerHTML = `<i class="fa-solid fa-down-long"></i> 下载 ${item.arch} 包`;
-
-            // 如果是通用包（Universal），可以在视觉上做一个稍微显眼的样式（可选）
+            btn.innerHTML = ` ${item.arch.includes("arm64") ? item.arch + "(推荐)" : item.arch}`;
             if (item.arch.toLowerCase() === "universal") {
               btn.style.fontWeight = "bold";
             }
-
             btnContainer.appendChild(btn);
           });
         }
 
-        // 5. 切换视图展现
-        document.getElementById("loading-view").classList.add("hidden");
-        document.getElementById("main-view").classList.remove("hidden");
+        // 完美呈现
+        document.getElementById("loading-view").className = "hidden";
+        document.getElementById("main-view").className = "";
       }
     </script>
   </body>
