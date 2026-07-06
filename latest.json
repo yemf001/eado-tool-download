@@ -1,7 +1,7 @@
 {
   "version": "v2.0.5",
   "releaseDate": "2026-07-06",
-  "releaseNotes": "- 删除测试文件和车辆数据结构文件\n- 组件归类存放\n- pnpm 切换为 npm\n- refactor: 移除不必要的注释，简化 ESLint 配置\n- 取消私有仓库流水线作业\n...",
+  "releaseNotes": "- refactor: 移除未使用的 computed 导入和更新时间显示\n- 统一参数传递，避免数据混乱\n- 删除测试文件和车辆数据结构文件\n- 组件归类存放\n- pnpm 切换为 npm\n...",
   "platforms": {
     "android": {
       "name": "Android",
