@@ -368,7 +368,7 @@
                   <div class="platform-icon">
                     <i class="fa-brands fa-apple"></i>
                   </div>
-                  <div class="platform-name">iOS 免签版</div>
+                  <div class="platform-name">iOS 端（未签名）</div>
                 </div>
                 <a id="btn-ios" href="#" class="btn btn-ios" target="_blank"
                   >下载</a
@@ -410,8 +410,7 @@
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         const JSON_URL =
-          "/eado-tool-download/latest.json?t=" +
-          new Date().getTime();
+          "/eado-tool-download/latest.json?t=" + new Date().getTime();
 
         fetch(JSON_URL)
           .then((response) => {
