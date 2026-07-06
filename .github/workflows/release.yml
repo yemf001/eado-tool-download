@@ -32,7 +32,7 @@ jobs:
       - name: Show Private Repo Last Commit
         run: |
           echo "=================================================="
-          echo "       PRIVATE REPOSITORY LAST COMMIT INFO        "
+          echo "     PRIVATE REPOSITORY LAST COMMIT INFO        "
           echo "=================================================="
           cd app
           git log -1 --stat
@@ -56,7 +56,7 @@ jobs:
           echo "msg=$MSG" >> $GITHUB_OUTPUT
 
   # =========================================================
-  # 1. iOS 构建作业 (免签拦截黑科技)
+  # 1. iOS 构建作业
   # =========================================================
   build-ios:
     needs: get-version
@@ -88,7 +88,6 @@ jobs:
 
       - name: Patch Xcode Project for Development Export
         run: |
-          # 适配子目录路径到 app/
           PBXPROJ_PATH="app/src-tauri/gen/apple/eado-app.xcodeproj/project.pbxproj"
           if [ -f "$PBXPROJ_PATH" ]; then
             sed -i '' 's/CODE_SIGNING_ALLOWED = YES;/CODE_SIGNING_ALLOWED = NO;/g' "$PBXPROJ_PATH"
@@ -120,12 +119,11 @@ jobs:
           CODE_SIGNING_ALLOWED: "NO"
           CODE_SIGNING_REQUIRED: "NO"
           CODE_SIGN_IDENTITY: ""
-        run: cd app && npx tauri ios build # 使用 npx 确保 npm 环境下命令调用正常
+        run: cd app && npx tauri ios build
 
       - name: Pack Unsigned IPA
         run: |
           mkdir -p Payload
-          # 在 app 子目录及 DerivedData 中查找 .app 产物
           APP_PATH=$(find app/src-tauri/gen/apple -name "*.app" -type d | grep -v "DerivedData" | head -n 1)
           if [ -z "$APP_PATH" ]; then
             APP_PATH=$(find /Users/runner/Library/Developer/Xcode/DerivedData -name "*.app" -type d | grep -v "Build/Intermediates" | head -n 1)
@@ -278,7 +276,7 @@ jobs:
             artifacts/**
 
   # =========================================================
-  # 5. update pages repo
+  # 5. update pages repo (主要变更集中在此区域)
   # =========================================================
   update-pages:
     needs: [get-version, upload-release]
@@ -290,20 +288,80 @@ jobs:
         with:
           repository: "yemf001/eado-tool-download"
           token: ${{ secrets.PUBLIC_REPO_TOKEN }}
+          ref: "pages" # 👈 显式指定切到 pages 分支
 
       - name: Generate latest.json
         run: |
           DATE=$(date +"%Y-%m-%d")
+          VERSION="${{ needs.get-version.outputs.app_version }}"
+
+          # 根据 Release 发布的公共仓地址动态生成（如果就在当前仓发布，保持如下即可）
+          REPO_URL="https://github.com/${{ github.repository }}"
+
+          # 1. 拼装 iOS & Windows
+          IOS_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_ios.ipa"
+          WINDOWS_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_windows.exe"
+
+          # 2. 拼装 Android 各架构子包的链接（依据 Tauri 生成包名习惯定义）
+          APK_UNIVERSAL="${REPO_URL}/releases/download/${VERSION}/app-universal-release.apk"
+          APK_ARM64="${REPO_URL}/releases/download/${VERSION}/app-arm64-v8a-release.apk"
+          APK_ARMV7="${REPO_URL}/releases/download/${VERSION}/app-armeabi-v7a-release.apk"
+          APK_X86_64="${REPO_URL}/releases/download/${VERSION}/app-x86_64-release.apk"
+
+          # 3. 使用 jq 丰富数据结构
           jq -n \
-            --arg ver "${{ needs.get-version.outputs.app_version }}" \
+            --arg ver "$VERSION" \
             --arg date "$DATE" \
             --arg notes "${{ needs.get-version.outputs.commit_msg }}" \
-            '{version: $ver, releaseDate: $date, releaseNotes: $notes}' > latest.json
+            --arg ios_url "$IOS_URL" \
+            --arg win_url "$WINDOWS_URL" \
+            --arg apk_uni "$APK_UNIVERSAL" \
+            --arg apk_a64 "$APK_ARM64" \
+            --arg apk_av7 "$APK_ARMV7" \
+            --arg apk_x64 "$APK_X86_64" \
+            '{
+              version: $ver,
+              releaseDate: $date,
+              releaseNotes: $notes,
+              platforms: {
+                android: {
+                  name: "Android",
+                  icon: "android",
+                  subLinks: [
+                    { arch: "Universal", filename: "app-universal-release.apk", url: $apk_uni },
+                    { arch: "arm64-v8a", filename: "app-arm64-v8a-release.apk", url: $apk_a64 },
+                    { arch: "armeabi-v7a", filename: "app-armeabi-v7a-release.apk", url: $apk_av7 },
+                    { arch: "x86_64", filename: "app-x86_64-release.apk", url: $apk_x64 }
+                  ]
+                },
+                ios: {
+                  name: "iOS (免签版)",
+                  icon: "apple",
+                  filename: "eado_app_ios.ipa",
+                  url: $ios_url
+                },
+                windows: {
+                  name: "Windows",
+                  icon: "windows",
+                  filename: "eado_app_windows.exe",
+                  url: $win_url
+                }
+              }
+            }' > latest.json
 
-      - name: Commit
+      - name: Commit and Push to pages branch
+        env:
+          COMMIT_MSG: ${{ needs.get-version.outputs.commit_msg }}
+          APP_VERSION: ${{ needs.get-version.outputs.app_version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add latest.json
-          git commit -m "update release metadata to ${{ needs.get-version.outputs.app_version }}" || exit 0
-          git push
+
+          if git diff --staged --quiet; then
+            echo "No changes in latest.json, skipping push."
+          else
+            # 👈 动态 Commit 信息：格式为 "chore(release): deploy vX.X.X - 真实更新日志"
+            git commit -m "chore(release): deploy $APP_VERSION - $COMMIT_MSG"
+            git push origin pages
+          fi
