@@ -304,26 +304,24 @@ jobs:
         run: |
           DATE=$(date +"%Y-%m-%d")
           VERSION="${{ needs.get-version.outputs.app_version }}"
-
           REPO_URL="https://github.com/${{ github.repository }}"
 
-          # 🌟 这里丢弃不稳定的 "latest" 路径，直接锁定当前构建的具体版本号 (例如 v1.x.x)
-          # 这样只要 Release 成功，链接就永远不会 404
-          IOS_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_ios.ipa"
-          WINDOWS_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_windows.exe"
+          # 🌟 修改点：拼接两个矩阵版本的真实下载链接
+          IOS_NORMAL_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_ios_normal.ipa"
+          IOS_BAOZOU_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_ios_baozou.ipa"
 
-          # Android 各架构子包的链接
+          WINDOWS_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_windows.exe"
           APK_X86="${REPO_URL}/releases/download/${VERSION}/app-x86-release.apk"
           APK_ARM64="${REPO_URL}/releases/download/${VERSION}/app-arm64-release.apk"
           APK_ARMV7="${REPO_URL}/releases/download/${VERSION}/app-arm-release.apk"
           APK_X86_64="${REPO_URL}/releases/download/${VERSION}/app-x86_64-release.apk"
 
-          # 使用 jq 丰富数据结构
           jq -n \
             --arg ver "$VERSION" \
             --arg date "$DATE" \
             --arg notes "${{ needs.get-version.outputs.commit_msg }}" \
-            --arg ios_url "$IOS_URL" \
+            --arg ios_normal "$IOS_NORMAL_URL" \
+            --arg ios_baozou "$IOS_BAOZOU_URL" \
             --arg win_url "$WINDOWS_URL" \
             --arg apk_x86 "$APK_X86" \
             --arg apk_a64 "$APK_ARM64" \
@@ -347,8 +345,11 @@ jobs:
                 ios: {
                   name: "iOS (未签名版)",
                   icon: "apple",
-                  filename: "eado_app_ios.ipa",
-                  url: $ios_url
+                  # 🌟 统一用子链接结构承载两个版本
+                  subLinks: [
+                    { type: "normal", name: "普通版", filename: "eado_app_ios_normal.ipa", url: $ios_normal },
+                    { type: "baozou", name: "暴走版", filename: "eado_app_ios_baozou.ipa", url: $ios_baozou }
+                  ]
                 },
                 windows: {
                   name: "Windows",
