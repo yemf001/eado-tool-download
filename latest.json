@@ -1,7 +1,7 @@
 {
-  "version": "v2.0.5",
-  "releaseDate": "2026-07-06",
-  "releaseNotes": "- refactor: 移除未使用的 computed 导入和更新时间显示\n- 统一参数传递，避免数据混乱\n- 删除测试文件和车辆数据结构文件\n- 组件归类存放\n- pnpm 切换为 npm\n...",
+  "version": "v2.0.6",
+  "releaseDate": "2026-07-08",
+  "releaseNotes": "- 加入盗包狗提示；重写车辆状态组件\n- refactor: 移除未使用的 computed 导入和更新时间显示\n- 统一参数传递，避免数据混乱\n- 删除测试文件和车辆数据结构文件\n- 组件归类存放\n...",
   "platforms": {
     "android": {
       "name": "Android",
@@ -10,22 +10,22 @@
         {
           "arch": "arm64-v8a",
           "filename": "app-arm64-release.apk",
-          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.5/app-arm64-release.apk"
+          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.6/app-arm64-release.apk"
         },
         {
           "arch": "armeabi-v7a",
           "filename": "app-arm-release.apk",
-          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.5/app-arm-release.apk"
+          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.6/app-arm-release.apk"
         },
         {
           "arch": "x86",
           "filename": "app-x86-release.apk",
-          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.5/app-x86-release.apk"
+          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.6/app-x86-release.apk"
         },
         {
           "arch": "x86_64",
           "filename": "app-x86_64-release.apk",
-          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.5/app-x86_64-release.apk"
+          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.6/app-x86_64-release.apk"
         }
       ]
     },
@@ -33,13 +33,13 @@
       "name": "iOS (未签名版)",
       "icon": "apple",
       "filename": "eado_app_ios.ipa",
-      "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.5/eado_app_ios.ipa"
+      "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.6/eado_app_ios.ipa"
     },
     "windows": {
       "name": "Windows",
       "icon": "windows",
       "filename": "eado_app_windows.exe",
-      "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.5/eado_app_windows.exe"
+      "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.6/eado_app_windows.exe"
     }
   }
 }
