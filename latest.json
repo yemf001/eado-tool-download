@@ -1,7 +1,7 @@
 {
-  "version": "v2.0.6",
+  "version": "v2.0.7",
   "releaseDate": "2026-07-08",
-  "releaseNotes": "- 加入盗包狗提示；重写车辆状态组件\n- refactor: 移除未使用的 computed 导入和更新时间显示\n- 统一参数传递，避免数据混乱\n- 删除测试文件和车辆数据结构文件\n- 组件归类存放\n...",
+  "releaseNotes": "- 强制更新到2.0.7版本，移除尊贵版不能远程空调的组件\n- 因长安api调整，尊贵版在没有购买服务的前提下无法远程空调，移除相关组件\n- 加入盗包狗提示；重写车辆状态组件\n- refactor: 移除未使用的 computed 导入和更新时间显示\n- 统一参数传递，避免数据混乱\n...",
   "platforms": {
     "android": {
       "name": "Android",
@@ -10,36 +10,48 @@
         {
           "arch": "arm64-v8a",
           "filename": "app-arm64-release.apk",
-          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.6/app-arm64-release.apk"
+          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.7/app-arm64-release.apk"
         },
         {
           "arch": "armeabi-v7a",
           "filename": "app-arm-release.apk",
-          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.6/app-arm-release.apk"
+          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.7/app-arm-release.apk"
         },
         {
           "arch": "x86",
           "filename": "app-x86-release.apk",
-          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.6/app-x86-release.apk"
+          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.7/app-x86-release.apk"
         },
         {
           "arch": "x86_64",
           "filename": "app-x86_64-release.apk",
-          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.6/app-x86_64-release.apk"
+          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.7/app-x86_64-release.apk"
         }
       ]
     },
     "ios": {
       "name": "iOS (未签名版)",
       "icon": "apple",
-      "filename": "eado_app_ios.ipa",
-      "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.6/eado_app_ios.ipa"
+      "subLinks": [
+        {
+          "type": "normal",
+          "name": "普通版",
+          "filename": "eado_app_ios_normal.ipa",
+          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.7/eado_app_ios_normal.ipa"
+        },
+        {
+          "type": "baozou",
+          "name": "暴走版",
+          "filename": "eado_app_ios_baozou.ipa",
+          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.7/eado_app_ios_baozou.ipa"
+        }
+      ]
     },
     "windows": {
       "name": "Windows",
       "icon": "windows",
       "filename": "eado_app_windows.exe",
-      "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.6/eado_app_windows.exe"
+      "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.7/eado_app_windows.exe"
     }
   }
 }
