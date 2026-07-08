@@ -61,6 +61,12 @@ jobs:
     needs: get-version
     runs-on: macos-15
 
+    # 🌟 核心改动：引入策略矩阵
+    strategy:
+      matrix:
+        # 定义两个版本：normal（普通版）和 baozou（暴走版）
+        version_type: [normal, baozou]
+
     steps:
       - name: Checkout PRIVATE Repo
         uses: actions/checkout@v4
@@ -118,6 +124,9 @@ jobs:
           CODE_SIGNING_ALLOWED: "NO"
           CODE_SIGNING_REQUIRED: "NO"
           CODE_SIGN_IDENTITY: ""
+          # 🌟 核心改动：根据矩阵动态注入 Vite 环境变量
+          # 如果当前是 baozou 矩阵，就注入 "true"，否则注入空或 "false"
+          VITE_BAOZOU: ${{ matrix.version_type == 'baozou' && 'true' || 'false' }}
         run: cd app && npx tauri ios build
 
       - name: Pack Unsigned IPA
@@ -128,13 +137,15 @@ jobs:
             APP_PATH=$(find /Users/runner/Library/Developer/Xcode/DerivedData -name "*.app" -type d | grep -v "Build/Intermediates" | head -n 1)
           fi
           cp -r "$APP_PATH" Payload/
-          zip -r eado_app_ios.ipa Payload
+          # 🌟 核心改动：打包成不同名字的 ipa 文件（如 eado_app_ios_normal.ipa 或 eado_app_ios_baozou.ipa）
+          zip -r "eado_app_ios_${{ matrix.version_type }}.ipa" Payload
 
       - name: Upload iOS Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ios
-          path: eado_app_ios.ipa
+          # 🌟 核心改动：区分 Artifact 产物名称
+          name: ios-${{ matrix.version_type }}
+          path: eado_app_ios_${{ matrix.version_type }}.ipa
 
   # =========================================================
   # 2. Windows
