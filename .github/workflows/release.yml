@@ -426,6 +426,11 @@ jobs:
                 ios: {
                   name: "iOS (未签名版)",
                   icon: "apple",
+                  notice: {
+                    title: "苹果手机用户安装提示：",
+                    content: "由于本App是<span class='font-bold text-red-600'>未签名版(IPA)</span>，无法直接在手机上点击安装。你需要将文件下载后，使用签名工具进行签名投递。<br><br><strong class='text-gray-700'>🛠️ 推荐使用以下工具安装：</strong><br>• <strong>电脑端：</strong>爱思助手（全自动签名安装）/ Sideloadly<br>• <strong>手机端：</strong>轻松签 / 巨魔商店 (TrollStore) / AltStore",
+                    type: "warning"
+                  },
                   subLinks: [
                     { type: "normal", name: "普通版", filename: "eado_app_ios_normal.ipa", url: $ios_normal },
                     { type: "baozou", name: "暴走版", filename: "eado_app_ios_baozou.ipa", url: $ios_baozou }
@@ -440,11 +445,10 @@ jobs:
                 linux: {
                   name: "Linux",
                   icon: "linux",
-                  # 🌟 完美对齐 Android/iOS 的 subLinks 数组结构
                   subLinks: [
-                    { type: "deb", name: "Debian / Ubuntu (.deb)", filename: "eado_app_linux.deb", url: $lin_deb },
-                    { type: "appimage", name: "AppImage 免安装 (.AppImage)", filename: "eado_app_linux.AppImage", url: $lin_appimage },
-                    { type: "rpm", name: "Fedora / RHEL (.rpm)", filename: "eado_app_linux.rpm", url: $lin_rpm }
+                    { type: "deb", name: "Deb", filename: "eado_app_linux.deb", url: $lin_deb },
+                    { type: "appimage", name: "AppImage", filename: "eado_app_linux.AppImage", url: $lin_appimage },
+                    { type: "rpm", name: "Rpm", filename: "eado_app_linux.rpm", url: $lin_rpm }
                   ]
                 }
               }
