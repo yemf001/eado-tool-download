@@ -320,7 +320,10 @@ jobs:
       - name: Collect Linux Packages
         run: |
           mkdir -p linux_packages
-          find app/src-tauri/target/release/bundle/ -type f \( -name "*.deb" -o -name "*.AppImage" -o -name "*.rpm" \) -exec cp {} ./linux_packages/ \;
+          # 提取打包目录下的文件，并直接重命名为固定文件名
+          cp $(find app/src-tauri/target/release/bundle/deb/ -name "*.deb" | head -n 1) ./linux_packages/eado_app_linux.deb
+          cp $(find app/src-tauri/target/release/bundle/appimage/ -name "*.AppImage" | head -n 1) ./linux_packages/eado_app_linux.AppImage
+          cp $(find app/src-tauri/target/release/bundle/rpm/ -name "*.rpm" | head -n 1) ./linux_packages/eado_app_linux.rpm
 
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
@@ -382,12 +385,10 @@ jobs:
           # 🌟 修改点：拼接两个矩阵版本的真实下载链接
           IOS_NORMAL_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_ios_normal.ipa"
           IOS_BAOZOU_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_ios_baozou.ipa"
-
           WINDOWS_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_windows.exe"
-          RAW_VER=$(echo "$VERSION" | sed 's/^v//')
-          LINUX_DEB="${REPO_URL}/releases/download/${VERSION}/eado-app_${RAW_VER}_amd64.deb"
-          LINUX_APPIMAGE="${REPO_URL}/releases/download/${VERSION}/eado-app_${RAW_VER}_amd64.AppImage"
-          LINUX_RPM="${REPO_URL}/releases/download/${VERSION}/eado-app-${RAW_VER}-1.x86_64.rpm"
+          LINUX_DEB="${REPO_URL}/releases/download/${VERSION}/eado_app_linux.deb"
+          LINUX_APPIMAGE="${REPO_URL}/releases/download/${VERSION}/eado_app_linux.AppImage"
+          LINUX_RPM="${REPO_URL}/releases/download/${VERSION}/eado_app_linux.rpm"
           APK_X86="${REPO_URL}/releases/download/${VERSION}/app-x86-release.apk"
           APK_ARM64="${REPO_URL}/releases/download/${VERSION}/app-arm64-release.apk"
           APK_ARMV7="${REPO_URL}/releases/download/${VERSION}/app-arm-release.apk"
@@ -425,7 +426,6 @@ jobs:
                 ios: {
                   name: "iOS (未签名版)",
                   icon: "apple",
-                  # 🌟 统一用子链接结构承载两个版本
                   subLinks: [
                     { type: "normal", name: "普通版", filename: "eado_app_ios_normal.ipa", url: $ios_normal },
                     { type: "baozou", name: "暴走版", filename: "eado_app_ios_baozou.ipa", url: $ios_baozou }
@@ -437,17 +437,18 @@ jobs:
                   filename: "eado_app_windows.exe",
                   url: $win_url
                 },
-                linux: { // 👈 整个追加进去
+                linux: {
                   name: "Linux",
                   icon: "linux",
+                  # 🌟 完美对齐 Android/iOS 的 subLinks 数组结构
                   subLinks: [
-                    { type: "deb", name: "Debian / Ubuntu", url: $lin_deb },
-                    { type: "appimage", name: "AppImage (免安装)", url: $lin_appimage },
-                    { type: "rpm", name: "Fedora / RHEL", url: $lin_rpm }
+                    { type: "deb", name: "Debian / Ubuntu (.deb)", filename: "eado_app_linux.deb", url: $lin_deb },
+                    { type: "appimage", name: "AppImage 免安装 (.AppImage)", filename: "eado_app_linux.AppImage", url: $lin_appimage },
+                    { type: "rpm", name: "Fedora / RHEL (.rpm)", filename: "eado_app_linux.rpm", url: $lin_rpm }
                   ]
                 }
               }
-            }' >
+            }' > latest.json
 
       - name: Commit and Push to pages branch
         env:
