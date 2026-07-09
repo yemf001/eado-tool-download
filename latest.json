@@ -64,19 +64,19 @@
       "subLinks": [
         {
           "type": "deb",
-          "name": "Debian / Ubuntu (.deb)",
+          "name": "Deb",
           "filename": "eado_app_linux.deb",
           "url": "https://github.com/yemf001/eado-app/releases/download/v2.0.8/eado_app_linux.deb"
         },
         {
           "type": "appimage",
-          "name": "AppImage 免安装 (.AppImage)",
+          "name": "AppImage",
           "filename": "eado_app_linux.AppImage",
           "url": "https://github.com/yemf001/eado-app/releases/download/v2.0.8/eado_app_linux.AppImage"
         },
         {
           "type": "rpm",
-          "name": "Fedora / RHEL (.rpm)",
+          "name": "Rpm",
           "filename": "eado_app_linux.rpm",
           "url": "https://github.com/yemf001/eado-app/releases/download/v2.0.8/eado_app_linux.rpm"
         }
