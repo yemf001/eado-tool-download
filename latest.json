@@ -1,7 +1,7 @@
 {
   "version": "v2.0.8",
   "releaseDate": "2026-07-09",
-  "releaseNotes": "- 强制更新：控车失败需要输入验证码之后才能继续控车，加入验证码弹出框\n- 加入控车验证码功能\n- 强制更新到2.0.7版本，移除尊贵版不能远程空调的组件\n- 因长安api调整，尊贵版在没有购买服务的前提下无法远程空调，移除相关组件\n- 加入盗包狗提示；重写车辆状态组件\n...",
+  "releaseNotes": "- 修复了一些已知问题\n- 优化了底层编译性能\n- 增加了对 Linux 平台 (.deb, .AppImage, .rpm) 的支持...",
   "platforms": {
     "android": {
       "name": "Android",
@@ -10,22 +10,22 @@
         {
           "arch": "arm64-v8a",
           "filename": "app-arm64-release.apk",
-          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.8/app-arm64-release.apk"
+          "url": "https://github.com/yemf001/eado-app/releases/download/v2.0.8/app-arm64-release.apk"
         },
         {
           "arch": "armeabi-v7a",
           "filename": "app-arm-release.apk",
-          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.8/app-arm-release.apk"
+          "url": "https://github.com/yemf001/eado-app/releases/download/v2.0.8/app-arm-release.apk"
         },
         {
           "arch": "x86",
           "filename": "app-x86-release.apk",
-          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.8/app-x86-release.apk"
+          "url": "https://github.com/yemf001/eado-app/releases/download/v2.0.8/app-x86-release.apk"
         },
         {
           "arch": "x86_64",
           "filename": "app-x86_64-release.apk",
-          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.8/app-x86_64-release.apk"
+          "url": "https://github.com/yemf001/eado-app/releases/download/v2.0.8/app-x86_64-release.apk"
         }
       ]
     },
@@ -37,13 +37,13 @@
           "type": "normal",
           "name": "普通版",
           "filename": "eado_app_ios_normal.ipa",
-          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.8/eado_app_ios_normal.ipa"
+          "url": "https://github.com/yemf001/eado-app/releases/download/v2.0.8/eado_app_ios_normal.ipa"
         },
         {
           "type": "baozou",
           "name": "暴走版",
           "filename": "eado_app_ios_baozou.ipa",
-          "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.8/eado_app_ios_baozou.ipa"
+          "url": "https://github.com/yemf001/eado-app/releases/download/v2.0.8/eado_app_ios_baozou.ipa"
         }
       ]
     },
@@ -51,7 +51,31 @@
       "name": "Windows",
       "icon": "windows",
       "filename": "eado_app_windows.exe",
-      "url": "https://github.com/yemf001/eado-tool-download/releases/download/v2.0.8/eado_app_windows.exe"
+      "url": "https://github.com/yemf001/eado-app/releases/download/v2.0.8/eado_app_windows.exe"
+    },
+    "linux": {
+      "name": "Linux",
+      "icon": "linux",
+      "subLinks": [
+        {
+          "type": "deb",
+          "name": "Debian / Ubuntu (.deb)",
+          "filename": "eado_app_linux.deb",
+          "url": "https://github.com/yemf001/eado-app/releases/download/v2.0.8/eado_app_linux.deb"
+        },
+        {
+          "type": "appimage",
+          "name": "AppImage 免安装 (.AppImage)",
+          "filename": "eado_app_linux.AppImage",
+          "url": "https://github.com/yemf001/eado-app/releases/download/v2.0.8/eado_app_linux.AppImage"
+        },
+        {
+          "type": "rpm",
+          "name": "Fedora / RHEL (.rpm)",
+          "filename": "eado_app_linux.rpm",
+          "url": "https://github.com/yemf001/eado-app/releases/download/v2.0.8/eado_app_linux.rpm"
+        }
+      ]
     }
   }
 }
