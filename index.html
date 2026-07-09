@@ -27,7 +27,7 @@
   <body
     class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col justify-between"
   >
-    <main class="container mx-auto px-4 py-8 max-w-4xl">
+    <main class="container mx-auto px-4 py-8 max-w-7xl">
       <header class="text-center mb-10">
         <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
           应用下载中心
@@ -58,7 +58,7 @@
 
       <section
         id="download-grid"
-        class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start"
+        class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 items-start"
       >
         <div class="text-center col-span-full py-12 text-gray-400">
           <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
@@ -74,27 +74,30 @@
     </footer>
 
     <script>
-      // 模拟通过 fetch 拿到的本地/网络 JSON
       const JSON_URL =
         "/eado-tool-download/latest.json?t=" + new Date().getTime();
       // const JSON_URL = "/latest.json?t=" + new Date().getTime();
 
-      const iconMap = {
+      // 内置兜底图标，如果 JSON 里的 icon 没填或写错，可以通过 key 匹配，再不行就用通用图标
+      const defaultIcons = {
         android: "fa-brands fa-android text-green-500",
         apple: "fa-brands fa-apple text-gray-800",
+        ios: "fa-brands fa-apple text-gray-800",
+        mac: "fa-brands fa-apple text-indigo-600",
+        macos: "fa-brands fa-apple text-indigo-600",
         windows: "fa-brands fa-windows text-blue-500",
+        linux: "fa-brands fa-linux text-orange-500",
       };
 
       async function initDownloadPage() {
         try {
-          // 这里为了演示演示，假设 fetch 已经成功拿到你提供的 JSON
           const response = await fetch(JSON_URL);
           if (!response.ok) throw new Error("网络请求失败");
           const data = await response.json();
 
           document.getElementById("version-badge").innerHTML = `
-                    <i class="fas fa-code-branch mr-1"></i> ${data.version} (${data.releaseDate})
-                `;
+            <i class="fas fa-code-branch mr-1"></i> ${data.version} (${data.releaseDate})
+          `;
           document.getElementById("release-notes").textContent =
             data.releaseNotes;
 
@@ -103,86 +106,106 @@
 
           Object.keys(data.platforms).forEach((key) => {
             const platform = data.platforms[key];
-            const iconClass = iconMap[platform.icon] || "fa-solid fa-download";
+
+            // 1. 图标解耦：优先采用 JSON 配置的完整类名，其次用内置映射，最后用默认下载图标
+            const iconClass =
+              platform.icon && platform.icon.includes(" ")
+                ? platform.icon
+                : defaultIcons[platform.icon] ||
+                  defaultIcons[key] ||
+                  "fa-solid fa-download text-blue-500";
 
             const card = document.createElement("div");
             card.className =
-              "bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between transition-all duration-200 hover:shadow-md";
+              "bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between h-full transition-all duration-200 hover:shadow-md";
 
-            // 动态获取当前平台的文件名（修复 Windows 不显示文件名的问题）
-            let displayFilename = "点击上方选择版本";
+            // 2. 底部文件名解耦：完全根据数据结构推导
+            let displayFilename = "包含多个安装包";
             if (platform.filename) {
-              displayFilename = platform.filename; // 直连平台（Windows）
-            } else if (platform.subLinks && platform.subLinks.length === 1) {
-              displayFilename = platform.subLinks[0].filename;
+              displayFilename = platform.filename;
+            } else if (platform.subLinks) {
+              if (platform.subLinks.length === 1) {
+                displayFilename = platform.subLinks[0].filename || "点击下载";
+              } else {
+                const types = platform.subLinks
+                  .map((l) => l.type || l.arch || l.name)
+                  .filter(Boolean);
+                displayFilename = types.length
+                  ? `支持 ${types.slice(0, 3).join(" / ")}`
+                  : "包含多个版本";
+              }
             }
 
             let cardHtml = `
-                        <div>
-                            <div class="flex items-center space-x-3 mb-6">
-                                <div class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-2xl">
-                                    <i class="${iconClass}"></i>
-                                </div>
-                                <h2 class="text-xl font-bold text-gray-800">${platform.name}</h2>
-                            </div>
-                            <div class="space-y-3">
-                    `;
+              <div>
+                <div class="flex items-center space-x-3 mb-6">
+                  <div class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-2xl">
+                    <i class="${iconClass}"></i>
+                  </div>
+                  <h2 class="text-xl font-bold text-gray-800">${platform.name}</h2>
+                </div>
+                <div class="space-y-3">
+            `;
 
-            // 渲染子按钮
+            // 3. 按钮渲染解耦
             if (platform.subLinks && platform.subLinks.length > 0) {
               platform.subLinks.forEach((link) => {
-                if (link.arch === "arm64-v8a") {
+                // 如果在 JSON 中明确标记了是推荐包（比如 Android 的 arm64）
+                if (link.isRecommend || link.arch === "arm64-v8a") {
                   cardHtml += `
-                                    <a href="${link.url}" class="recommend-btn block text-center w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-green-100 transition-all text-sm break-all relative overflow-hidden">
-                                        <span class="absolute top-0 right-0 bg-yellow-400 text-emerald-900 text-[10px] font-extrabold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider shadow-sm">RECOMMEND</span>
-                                        <i class="fas fa-star text-yellow-300 mr-1 animate-pulse"></i> 下载 (arm64 推荐)
-                                    </a>
-                                `;
-                } else if (key === "ios") {
-                  cardHtml += `
-                                    <a href="${link.url}" class="block text-center w-full bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium py-2.5 px-4 rounded-xl border border-gray-200/60 transition-colors text-sm break-all">
-                                        下载 ${link.name} <span class="text-xs text-red-500 font-normal block md:inline md:ml-1">(需自签)</span>
-                                    </a>
-                                `;
+                    <a href="${link.url}" class="recommend-btn block text-center w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-green-100 transition-all text-sm break-all relative overflow-hidden">
+                      <span class="absolute top-0 right-0 bg-yellow-400 text-emerald-900 text-[10px] font-extrabold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider shadow-sm">RECOMMEND</span>
+                      <i class="fas fa-star text-yellow-300 mr-1 animate-pulse"></i> ${link.name || "立即下载 (" + (link.arch || "推荐") + ")"}
+                    </a>
+                  `;
                 } else {
+                  // 普通子链接按钮，支持带小尾巴标签（例如：需自签）
+                  const tagHtml = link.tag
+                    ? `<span class="text-xs text-red-500 font-normal block xl:inline xl:ml-1">(${link.tag})</span>`
+                    : "";
                   cardHtml += `
-                                    <a href="${link.url}" class="block text-center w-full bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium py-2.5 px-4 rounded-xl border border-gray-200/60 transition-colors text-sm break-all">
-                                        下载 (${link.arch || link.name})
-                                    </a>
-                                `;
+                    <a href="${link.url}" class="block text-center w-full bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium py-2.5 px-4 rounded-xl border border-gray-200/60 transition-colors text-sm break-all">
+                      下载 ${link.name || link.arch || ""} ${tagHtml}
+                    </a>
+                  `;
                 }
               });
 
-              // --- 新增：如果是 iOS 平台，在按钮下方插入保姆级自签提示框 ---
-              if (key === "ios") {
+              // 4. 提示框解耦：只要 JSON 里面配了 notice 节点就渲染，支持不同颜色警告样式
+              if (platform.notice) {
+                const isAlert = platform.notice.type === "danger";
+                const boxClass = isAlert
+                  ? "bg-red-50/70 border-red-200/60 text-red-900"
+                  : "bg-amber-50/70 border-amber-200/60 text-amber-800";
+                const iconColor = isAlert ? "text-red-600" : "text-amber-600";
+
                 cardHtml += `
-                                <div class="mt-4 bg-amber-50/70 border border-amber-200/60 rounded-xl p-3 text-xs text-amber-800 leading-relaxed">
-                                    <p class="font-bold mb-1"><i class="fas fa-circle-info text-amber-600 mr-1"></i> 苹果手机用户安装提示：</p>
-                                    <p>由于本App是<span class="font-bold text-red-600">未签名版(IPA)</span>，无法直接在手机上点击安装。你需要将文件下载后，使用签名工具进行签名投递。</p>
-                                    <p class="mt-1.5 font-semibold text-gray-700">🛠️ 推荐使用以下工具安装：</p>
-                                    <ul class="list-disc pl-4 mt-0.5 space-y-0.5 text-gray-600">
-                                        <li><strong class="text-gray-800">电脑端：</strong>爱思助手（全自动签名安装）/ Sideloadly</li>
-                                        <li><strong class="text-gray-800">手机端：</strong>轻松签 / 巨魔商店 (TrollStore) / AltStore</li>
-                                    </ul>
-                                </div>
-                            `;
+                  <div class="mt-4 border rounded-xl p-3 text-xs leading-relaxed ${boxClass}">
+                    <p class="font-bold mb-1"><i class="fas fa-circle-info ${iconColor} mr-1"></i> ${platform.notice.title}</p>
+                    <p>${platform.notice.content}</p>
+                  </div>
+                `;
               }
             } else if (platform.url) {
-              // Windows 直连
+              // 单直连文件（例如 Windows 或 Web直连）
+              const btnBg =
+                platform.theme === "blue" || !platform.theme
+                  ? "bg-blue-600 hover:bg-blue-700 shadow-blue-200"
+                  : "bg-gray-800 hover:bg-gray-900 shadow-gray-200";
               cardHtml += `
-                            <a href="${platform.url}" class="block text-center w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl shadow-sm shadow-blue-200 transition-colors text-sm break-all">
-                                <i class="fas fa-arrow-down mr-1"></i> 立即下载
-                            </a>
-                        `;
+                <a href="${platform.url}" class="block text-center w-full ${btnBg} text-white font-medium py-3 px-4 rounded-xl shadow-sm transition-colors text-sm break-all">
+                  <i class="fas fa-arrow-down mr-1"></i> 立即下载
+                </a>
+              `;
             }
 
             cardHtml += `
-                            </div>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-gray-50 text-xs text-gray-400 text-center truncate" title="${displayFilename}">
-                            ${displayFilename}
-                        </div>
-                    `;
+                </div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-gray-50 text-xs text-gray-400 text-center truncate" title="${displayFilename}">
+                ${displayFilename}
+              </div>
+            `;
 
             card.innerHTML = cardHtml;
             gridContainer.appendChild(card);
@@ -190,11 +213,11 @@
         } catch (error) {
           console.error("加载失败:", error);
           document.getElementById("download-grid").innerHTML = `
-                    <div class="text-center col-span-full py-12 text-red-500">
-                        <i class="fas fa-exclamation-circle text-3xl mb-2"></i>
-                        <p>数据加载失败，请刷新重试</p>
-                    </div>
-                `;
+            <div class="text-center col-span-full py-12 text-red-500">
+              <i class="fas fa-exclamation-circle text-3xl mb-2"></i>
+              <p>数据加载失败，请刷新重试</p>
+            </div>
+          `;
         }
       }
 
