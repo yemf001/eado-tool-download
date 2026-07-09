@@ -257,6 +257,78 @@ jobs:
           path: app/src-tauri/gen/android/**/*.apk
 
   # =========================================================
+  # 3.5 新增：Linux 构建作业 (.deb, .AppImage, .rpm)
+  # =========================================================
+  build-linux:
+    needs: get-version
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout PRIVATE repo
+        uses: actions/checkout@v4
+        with:
+          repository: "yemf001/eado-app"
+          token: ${{ secrets.PUBLIC_REPO_TOKEN }}
+          path: "app"
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: "app/package-lock.json"
+
+      - name: Cache Cargo registry and git
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('app/src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Install deps
+        run: cd app && npm ci
+
+      - name: Inject Linux build targets
+        run: |
+          node -e "
+            const fs = require('fs');
+            const file = './app/src-tauri/tauri.conf.json';
+            const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+            if (data.bundle) {
+              data.bundle.targets = ['deb', 'appimage', 'rpm'];
+            } else if (data.tauri && data.tauri.bundle) {
+              data.tauri.bundle.targets = ['deb', 'appimage', 'rpm'];
+            }
+            fs.writeFileSync(file, JSON.stringify(data, null, 2));
+          "
+
+      - name: Build Linux
+        run: cd app && npm run tauri build
+
+      - name: Collect Linux Packages
+        run: |
+          mkdir -p linux_packages
+          find app/src-tauri/target/release/bundle/ -type f \( -name "*.deb" -o -name "*.AppImage" -o -name "*.rpm" \) -exec cp {} ./linux_packages/ \;
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: linux_packages/*
+
+  # =========================================================
   # 4. Release
   # =========================================================
   upload-release:
@@ -265,6 +337,7 @@ jobs:
       - build-ios
       - build-windows
       - build-android
+      - build-linux
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -311,6 +384,10 @@ jobs:
           IOS_BAOZOU_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_ios_baozou.ipa"
 
           WINDOWS_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_windows.exe"
+          RAW_VER=$(echo "$VERSION" | sed 's/^v//')
+          LINUX_DEB="${REPO_URL}/releases/download/${VERSION}/eado-app_${RAW_VER}_amd64.deb"
+          LINUX_APPIMAGE="${REPO_URL}/releases/download/${VERSION}/eado-app_${RAW_VER}_amd64.AppImage"
+          LINUX_RPM="${REPO_URL}/releases/download/${VERSION}/eado-app-${RAW_VER}-1.x86_64.rpm"
           APK_X86="${REPO_URL}/releases/download/${VERSION}/app-x86-release.apk"
           APK_ARM64="${REPO_URL}/releases/download/${VERSION}/app-arm64-release.apk"
           APK_ARMV7="${REPO_URL}/releases/download/${VERSION}/app-arm-release.apk"
@@ -327,6 +404,9 @@ jobs:
             --arg apk_a64 "$APK_ARM64" \
             --arg apk_av7 "$APK_ARMV7" \
             --arg apk_x64 "$APK_X86_64" \
+            --arg lin_deb "$LINUX_DEB" \
+            --arg lin_appimage "$LINUX_APPIMAGE" \
+            --arg lin_rpm "$LINUX_RPM" \
             '{
               version: $ver,
               releaseDate: $date,
@@ -356,9 +436,18 @@ jobs:
                   icon: "windows",
                   filename: "eado_app_windows.exe",
                   url: $win_url
+                },
+                linux: { // 👈 整个追加进去
+                  name: "Linux",
+                  icon: "linux",
+                  subLinks: [
+                    { type: "deb", name: "Debian / Ubuntu", url: $lin_deb },
+                    { type: "appimage", name: "AppImage (免安装)", url: $lin_appimage },
+                    { type: "rpm", name: "Fedora / RHEL", url: $lin_rpm }
+                  ]
                 }
               }
-            }' > latest.json
+            }' >
 
       - name: Commit and Push to pages branch
         env:
