@@ -63,6 +63,7 @@ jobs:
 
     # 🌟 核心改动：引入策略矩阵
     strategy:
+      max-parallel: 1 # 👈 🌟 核心优化：限制两个 iOS 版本同时只跑一个，排队按顺序执行，释放 macOS 资源压力
       matrix:
         # 定义两个版本：normal（普通版）和 baozou（暴走版）
         version_type: [normal, baozou]
