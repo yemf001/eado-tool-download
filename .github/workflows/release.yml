@@ -382,7 +382,6 @@ jobs:
           VERSION="${{ needs.get-version.outputs.app_version }}"
           REPO_URL="https://github.com/${{ github.repository }}"
 
-          # 🌟 修改点：拼接两个矩阵版本的真实下载链接
           IOS_NORMAL_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_ios_normal.ipa"
           IOS_BAOZOU_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_ios_baozou.ipa"
           WINDOWS_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_windows.exe"
@@ -393,6 +392,9 @@ jobs:
           APK_ARM64="${REPO_URL}/releases/download/${VERSION}/app-arm64-release.apk"
           APK_ARMV7="${REPO_URL}/releases/download/${VERSION}/app-arm-release.apk"
           APK_X86_64="${REPO_URL}/releases/download/${VERSION}/app-x86_64-release.apk"
+
+          # 🌟 修复核心：将带有单双引号交织的 HTML 文本定义为独立的 Bash 变量
+          IOS_NOTICE_CONTENT="由于本App是<span class=\"font-bold text-red-600\">未签名版(IPA)</span>，无法直接在手机上点击安装。你需要将文件下载后，使用签名工具进行签名投递。<br><br><strong class=\"text-gray-700\">🛠️ 推荐使用以下工具安装：</strong><br>• <strong>电脑端：</strong>爱思助手（全自动签名安装）/ Sideloadly<br>• <strong>手机端：</strong>轻松签 / 巨魔商店 (TrollStore) / AltStore"
 
           jq -n \
             --arg ver "$VERSION" \
@@ -408,6 +410,7 @@ jobs:
             --arg lin_deb "$LINUX_DEB" \
             --arg lin_appimage "$LINUX_APPIMAGE" \
             --arg lin_rpm "$LINUX_RPM" \
+            --arg ios_notice "$IOS_NOTICE_CONTENT" \
             '{
               version: $ver,
               releaseDate: $date,
@@ -428,7 +431,7 @@ jobs:
                   icon: "apple",
                   notice: {
                     title: "苹果手机用户安装提示：",
-                    content: "由于本App是<span class='font-bold text-red-600'>未签名版(IPA)</span>，无法直接在手机上点击安装。你需要将文件下载后，使用签名工具进行签名投递。<br><br><strong class='text-gray-700'>🛠️ 推荐使用以下工具安装：</strong><br>• <strong>电脑端：</strong>爱思助手（全自动签名安装）/ Sideloadly<br>• <strong>手机端：</strong>轻松签 / 巨魔商店 (TrollStore) / AltStore",
+                    content: $ios_notice,
                     type: "warning"
                   },
                   subLinks: [
