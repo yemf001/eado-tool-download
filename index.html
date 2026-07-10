@@ -153,8 +153,8 @@
                 // 如果在 JSON 中明确标记了是推荐包（比如 Android 的 arm64）
                 if (link.isRecommend || link.arch === "arm64-v8a") {
                   cardHtml += `
-                    <a href="${link.url}" class="recommend-btn block text-center w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-green-100 transition-all text-sm break-all relative overflow-hidden">
-                      <span class="absolute top-0 right-0 bg-yellow-400 text-emerald-900 text-[10px] font-extrabold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider shadow-sm">RECOMMEND</span>
+                    <a href="${link.url}" class=" block text-center w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-green-100 transition-all text-sm break-all relative overflow-hidden">
+                      <span class="absolute top-0 right-0 bg-yellow-400 text-emerald-900 text-[10px] font-extrabold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider shadow-sm">推荐</span>
                       <i class="fas fa-star text-yellow-300 mr-1 animate-pulse"></i> ${link.name || "立即下载 (" + (link.arch || "推荐") + ")"}
                     </a>
                   `;
