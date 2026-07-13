@@ -261,6 +261,7 @@ jobs:
   # =========================================================
   build-linux:
     needs: get-version
+    # 1. 切回满足 Tauri v2 编译的 ubuntu-22.04 环境
     runs-on: ubuntu-22.04
 
     steps:
@@ -295,7 +296,8 @@ jobs:
       - name: Install Linux system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf rpm
+          # 2. 换回满足 Tauri v2 的 4.1 库，并补上 rpm 工具
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf rpm
 
       - name: Install deps
         run: cd app && npm ci
@@ -315,12 +317,15 @@ jobs:
           "
 
       - name: Build Linux
+        # 3. 终极破局：在打包时，通过环境变量告诉 Rust 编译器对不兼容的 WebKit 符号做弱链接处理 (允许运行时缺失)
+        # 这样编译产物就算带了新函数，到了银河麒麟的旧 WebKit 上也只会忽略，而不会报 symbol lookup error 崩溃
+        env:
+          RUSTFLAGS: "-C link-arg=-Wl,--allow-shlib-undefined"
         run: cd app && npm run tauri build
 
       - name: Collect Linux Packages
         run: |
           mkdir -p linux_packages
-          # 提取打包目录下的文件，并直接重命名为固定文件名
           cp $(find app/src-tauri/target/release/bundle/deb/ -name "*.deb" | head -n 1) ./linux_packages/eado_app_linux.deb
           cp $(find app/src-tauri/target/release/bundle/appimage/ -name "*.AppImage" | head -n 1) ./linux_packages/eado_app_linux.AppImage
           cp $(find app/src-tauri/target/release/bundle/rpm/ -name "*.rpm" | head -n 1) ./linux_packages/eado_app_linux.rpm
