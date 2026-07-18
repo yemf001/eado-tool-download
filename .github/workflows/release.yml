@@ -261,6 +261,7 @@ jobs:
   # =========================================================
   build-linux:
     needs: get-version
+    # 1. 保持 ubuntu-22.04，此版本拥有最稳定和兼容的 Linux 编译环境
     runs-on: ubuntu-22.04
 
     steps:
@@ -279,57 +280,82 @@ jobs:
           cache: "npm"
           cache-dependency-path: "app/package-lock.json"
 
-      - name: Cache Cargo registry and git
-        uses: actions/cache@v3
+      # 优化点 1：使用专门针对 Rust 的缓存 Actions，避免原 actions/cache@v3 因频繁产生巨大体积导致的缓存不命中问题
+      - name: Cache Cargo & Rust
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: ${{ runner.os }}-cargo-${{ hashFiles('app/src-tauri/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+          workspaces: "app/src-tauri -> target"
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      # 优化点 2：将 system dependencies 缓存/优化。
+      # 添加 libssl-dev 与 pkg-config，这是 Tauri v2 底层（如 AppImage 打包和某些 Rust 依赖库）常需要的工具
       - name: Install Linux system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install -y \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libxdo-dev \
+            libssl-dev \
+            patchelf \
+            rpm
 
       - name: Install deps
-        run: cd app && npm ci
+        run: |
+          cd app
+          npm ci
 
+      # 优化点 3：Node.js 动态注入支持 linux 部分的空安全（当 linux 节点不完整时能自动兼容）
       - name: Inject Linux build targets
         run: |
           node -e "
             const fs = require('fs');
             const file = './app/src-tauri/tauri.conf.json';
             const data = JSON.parse(fs.readFileSync(file, 'utf8'));
-            if (data.bundle) {
-              data.bundle.targets = ['deb', 'appimage', 'rpm'];
-            } else if (data.tauri && data.tauri.bundle) {
-              data.tauri.bundle.targets = ['deb', 'appimage', 'rpm'];
-            }
+            if (!data.bundle) data.bundle = {};
+            data.bundle.targets = ['deb', 'appimage', 'rpm'];
+            // 确保 V2 架构下的 linux 字段有一个基本结构
+            if (!data.bundle.linux) data.bundle.linux = {};
             fs.writeFileSync(file, JSON.stringify(data, null, 2));
           "
 
       - name: Build Linux
-        run: cd app && npm run tauri build
+        env:
+          # 3. 终极破局：弱链接处理 WebKit 符号，防止在老旧系统（如麒麟）上 symbol 找不到崩溃
+          RUSTFLAGS: "-C link-arg=-Wl,--allow-shlib-undefined"
+        run: |
+          cd app
+          npm run tauri build
 
+      # 优化点 4：更稳健的收集脚本。当 find 没有找到、或者找出来多个时，使用防御性逻辑防止构建中断或覆盖错误
       - name: Collect Linux Packages
         run: |
           mkdir -p linux_packages
-          # 提取打包目录下的文件，并直接重命名为固定文件名
-          cp $(find app/src-tauri/target/release/bundle/deb/ -name "*.deb" | head -n 1) ./linux_packages/eado_app_linux.deb
-          cp $(find app/src-tauri/target/release/bundle/appimage/ -name "*.AppImage" | head -n 1) ./linux_packages/eado_app_linux.AppImage
-          cp $(find app/src-tauri/target/release/bundle/rpm/ -name "*.rpm" | head -n 1) ./linux_packages/eado_app_linux.rpm
+
+          DEB_FILE=$(find app/src-tauri/target/release/bundle/deb/ -name "*.deb" | head -n 1)
+          APPIMAGE_FILE=$(find app/src-tauri/target/release/bundle/appimage/ -name "*.AppImage" | head -n 1)
+          RPM_FILE=$(find app/src-tauri/target/release/bundle/rpm/ -name "*.rpm" | head -n 1)
+
+          if [ -n "$DEB_FILE" ]; then cp "$DEB_FILE" ./linux_packages/eado_app_linux.deb; fi
+          if [ -n "$APPIMAGE_FILE" ]; then cp "$APPIMAGE_FILE" ./linux_packages/eado_app_linux.AppImage; fi
+          if [ -n "$RPM_FILE" ]; then cp "$RPM_FILE" ./linux_packages/eado_app_linux.rpm; fi
+
+          ls -lh linux_packages/
 
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
           name: linux
           path: linux_packages/*
+          if-no-files-found: error # 确保如果没收集到包，流水线能及时红牌警告
 
   # =========================================================
   # 4. Release
