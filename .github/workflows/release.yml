@@ -64,8 +64,8 @@ jobs:
     # 🌟 核心改动：引入策略矩阵
     strategy:
       matrix:
-        # 定义两个版本：normal（普通版）和 baozou（暴走版）
-        version_type: [normal, baozou]
+        # 定义版本：normal
+        version_type: [normal]
 
     steps:
       - name: Checkout PRIVATE Repo
@@ -383,7 +383,6 @@ jobs:
           REPO_URL="https://github.com/${{ github.repository }}"
 
           IOS_NORMAL_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_ios_normal.ipa"
-          IOS_BAOZOU_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_ios_baozou.ipa"
           WINDOWS_URL="${REPO_URL}/releases/download/${VERSION}/eado_app_windows.exe"
           LINUX_DEB="${REPO_URL}/releases/download/${VERSION}/eado_app_linux.deb"
           LINUX_APPIMAGE="${REPO_URL}/releases/download/${VERSION}/eado_app_linux.AppImage"
@@ -401,7 +400,6 @@ jobs:
             --arg date "$DATE" \
             --arg notes "${{ needs.get-version.outputs.commit_msg }}" \
             --arg ios_normal "$IOS_NORMAL_URL" \
-            --arg ios_baozou "$IOS_BAOZOU_URL" \
             --arg win_url "$WINDOWS_URL" \
             --arg apk_x86 "$APK_X86" \
             --arg apk_a64 "$APK_ARM64" \
@@ -435,8 +433,7 @@ jobs:
                     type: "warning"
                   },
                   subLinks: [
-                    { type: "normal", name: "普通版", filename: "eado_app_ios_normal.ipa", url: $ios_normal },
-                    { type: "baozou", name: "暴走版", filename: "eado_app_ios_baozou.ipa", url: $ios_baozou }
+                    { type: "normal", name: "普通版", filename: "eado_app_ios_normal.ipa", url: $ios_normal }
                   ]
                 },
                 windows: {
